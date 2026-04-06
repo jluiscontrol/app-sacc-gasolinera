@@ -1,18 +1,8 @@
-import {
-  View,
-  Text,
-  Alert,
-  FlatList,
-  TouchableOpacity,
-  StyleSheet,
-  Pressable,
-} from "react-native";
-import React, { useEffect, useState } from "react";
+import { View, Text, FlatList, StyleSheet, Pressable } from "react-native";
+import { useEffect, useState } from "react";
 import instance from "../utils/Instance";
 import CustomAppBar from "./CustomAppBar";
 import Ionicons from "react-native-vector-icons/Ionicons";
-import { Divider } from "react-native-paper";
-import { sharedStyles } from "../styles/SharedStyles";
 import {
   SafeAreaView,
   useSafeAreaInsets,
@@ -38,7 +28,7 @@ export default function ListClientesByPlacaComponent({
 
       instance
         .get(
-          `api/v1/cartera/cliente/search/placa/list/${periodofiscal_id}/${numeroplaca.toUpperCase()}`
+          `api/v1/cartera/cliente/search/placa/list/${periodofiscal_id}/${numeroplaca.toUpperCase()}`,
         )
         .then((resp) => {
           if (!resp.data.item || resp.data.item.length === 0) {
@@ -142,11 +132,6 @@ export default function ListClientesByPlacaComponent({
 }
 
 const styles = StyleSheet.create({
-  button: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: 20,
-  },
   searchIcon: {
     marginLeft: 7,
     paddingTop: 7,

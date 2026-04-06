@@ -1,4 +1,3 @@
-import React from "react";
 import {
   View,
   Text,
@@ -57,6 +56,7 @@ const CustomAppBar = (props) => {
               paddingHorizontal: 10,
               fontSize: 18,
               color: contentColor,
+              fontWeight: bold ? "500" : "normal",
             }}
           >
             {title?.toUpperCase() || ""}
@@ -83,7 +83,7 @@ const CustomAppBar = (props) => {
 
 const styles = StyleSheet.create({
   appBar: {
-    height: Platform.OS === "ios" ? 44 : 56,
+    height: Platform.OS === "ios" ? 44 : 60,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",

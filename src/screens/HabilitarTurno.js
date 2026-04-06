@@ -1,12 +1,5 @@
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  ToastAndroid,
-  Alert,
-} from "react-native";
-import React, { act, useCallback, useEffect, useState } from "react";
+import { View, Text, StyleSheet, ScrollView, ToastAndroid } from "react-native";
+import { useCallback, useEffect, useState } from "react";
 import { Button, TextInput } from "react-native-paper";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { getToken, mergeStorage } from "../utils/Utils";
@@ -38,7 +31,7 @@ export default function HabilitarTurno({ imprimir, status = "I", closeModal }) {
     useCallback(() => {
       callDataInitial();
       return () => {};
-    }, [])
+    }, []),
   );
 
   const callDataInitial = async () => {
@@ -47,7 +40,7 @@ export default function HabilitarTurno({ imprimir, status = "I", closeModal }) {
     const arrIdsEstaciones = localstorage.listEstaciones;
     const todasEstanIncluidas = validarEstacionesTurno(
       data.turnoActivo,
-      arrIdsEstaciones
+      arrIdsEstaciones,
     );
 
     if (!todasEstanIncluidas) {
@@ -68,14 +61,14 @@ export default function HabilitarTurno({ imprimir, status = "I", closeModal }) {
     const arrEstaciones = localstorage.estaciones.filter(
       (x) =>
         arrIdsEstaciones.includes(x.id) &&
-        data.turnoActivo.estaciones.includes(x.id)
+        data.turnoActivo.estaciones.includes(x.id),
     );
     const arrSurtidoresS = localstorage.surtidores;
     setListArrSurtidores(localstorage.surtidores);
     const fechaActual = new Date();
     const codigoUnicoMovil = `${localstorage.userData.username.substring(
       0,
-      4
+      4,
     )}${fechaActual.getTime()}`;
 
     setCodigoMovil(codigoUnicoMovil);
@@ -84,7 +77,7 @@ export default function HabilitarTurno({ imprimir, status = "I", closeModal }) {
       const arrId = arrEstaciones.map((objeto) => objeto.id);
       const ids = arrId.join(",");
       const arrSurtidores = arrSurtidoresS.filter((x) =>
-        ids.includes(x.estacion_id)
+        ids.includes(x.estacion_id),
       );
       const arrIdSurtidores = arrSurtidores.map((objeto) => objeto.id);
       const idsSurtidores = arrIdSurtidores.join(",");
@@ -93,14 +86,14 @@ export default function HabilitarTurno({ imprimir, status = "I", closeModal }) {
         .get(
           `api/v1/gasolinera/lectura/surtidores/list/${
             localstorage.periodofiscal_id
-          }/${idsSurtidores !== "" ? idsSurtidores : 0}`
+          }/${idsSurtidores !== "" ? idsSurtidores : 0}`,
         )
         .then((resp) => {
           if (resp.data.status === 200) {
             if (resp.data.items.length > 0) {
               const changeData = localstorage.surtidores.map((item) => {
                 const informationTransactor = resp.data.items.find(
-                  (x) => x.surtidor_id === item.id
+                  (x) => x.surtidor_id === item.id,
                 );
                 if (informationTransactor) {
                   return {
@@ -121,7 +114,7 @@ export default function HabilitarTurno({ imprimir, status = "I", closeModal }) {
                 localstorage.surtidores.map((item) => ({
                   ...item,
                   galonaje: 0,
-                }))
+                })),
               );
             }
           }
@@ -158,13 +151,14 @@ export default function HabilitarTurno({ imprimir, status = "I", closeModal }) {
       ) {
         const establecimientoObj = localstorage.establecimiento.find(
           (x) =>
-            x.id === parseInt(localstorage.configurationUser.establecimiento_id)
+            x.id ===
+            parseInt(localstorage.configurationUser.establecimiento_id),
         );
         const additional_services = JSON.parse(
-          establecimientoObj?.additional_services ?? "{}"
+          establecimientoObj?.additional_services ?? "{}",
         );
         const conexion_transactor = JSON.parse(
-          additional_services?.conexion_transactor ?? "{}"
+          additional_services?.conexion_transactor ?? "{}",
         );
         const url = conexion_transactor?.url ?? "";
         let objConexion = {
@@ -189,7 +183,7 @@ export default function HabilitarTurno({ imprimir, status = "I", closeModal }) {
       .map((e) => Number(e.trim()));
 
     return estacionesTurno.every((estacion) =>
-      estacionesUsuario.includes(estacion)
+      estacionesUsuario.includes(estacion),
     );
   };
 
@@ -217,7 +211,7 @@ export default function HabilitarTurno({ imprimir, status = "I", closeModal }) {
             setIsLoading(false);
             ToastAndroid.show(
               "Hubo un problema al obtener la informacion del comando,datos incompletos",
-              ToastAndroid.SHORT
+              ToastAndroid.SHORT,
             );
             return null;
           }
@@ -225,7 +219,7 @@ export default function HabilitarTurno({ imprimir, status = "I", closeModal }) {
           setIsLoading(false);
           ToastAndroid.show(
             "Hubo un problema al obtener la informacion del comando",
-            ToastAndroid.SHORT
+            ToastAndroid.SHORT,
           );
           return null;
         }
@@ -246,7 +240,7 @@ export default function HabilitarTurno({ imprimir, status = "I", closeModal }) {
         ToastAndroid.show(
           "Hubo un problema al obtener la informacion del comando " +
             messageError,
-          ToastAndroid.SHORT
+          ToastAndroid.SHORT,
         );
       });
     return data;
@@ -273,7 +267,7 @@ export default function HabilitarTurno({ imprimir, status = "I", closeModal }) {
           setIsLoading(false);
           ToastAndroid.show(
             "Hubo un problema al obtener la informacion del comando,datos incompletos",
-            ToastAndroid.SHORT
+            ToastAndroid.SHORT,
           );
           return null;
         }
@@ -281,7 +275,7 @@ export default function HabilitarTurno({ imprimir, status = "I", closeModal }) {
         setIsLoading(false);
         ToastAndroid.show(
           "Hubo un problema al obtener la informacion del comando",
-          ToastAndroid.SHORT
+          ToastAndroid.SHORT,
         );
         return null;
       }
@@ -290,7 +284,7 @@ export default function HabilitarTurno({ imprimir, status = "I", closeModal }) {
 
   const getGalonajeLado = async (estacion, lado) => {
     const arrFilterFilaSurtidor = listArrSurtidores.filter(
-      (x) => x.estacion_id === estacion.id && x.posicion === lado
+      (x) => x.estacion_id === estacion.id && x.posicion === lado,
     );
     if (arrFilterFilaSurtidor.length > 0) {
       const codigo_transactor =
@@ -302,7 +296,7 @@ export default function HabilitarTurno({ imprimir, status = "I", closeModal }) {
         "/commands/";
       const responseTransactor = await callDataLecturaTransactor(
         codigo_transactor[0],
-        url
+        url,
       );
       if (responseTransactor) {
         const arrResponseTransactor = responseTransactor.split(",");
@@ -313,7 +307,7 @@ export default function HabilitarTurno({ imprimir, status = "I", closeModal }) {
         }
         const changeData = surtidores.map((item) => {
           const informationTransactor = groupedArraysInformation.find(
-            (x) => codigo_transactor[0] + "," + x[1] === item.codigo_transactor
+            (x) => codigo_transactor[0] + "," + x[1] === item.codigo_transactor,
           );
           if (informationTransactor) {
             return {
@@ -358,7 +352,7 @@ export default function HabilitarTurno({ imprimir, status = "I", closeModal }) {
   const changeValorManual = (value, surtidor) => {
     let arrSurtidores = [...surtidores];
     const indice = arrSurtidores.findIndex(
-      (objeto) => objeto.id === surtidor.id
+      (objeto) => objeto.id === surtidor.id,
     );
     arrSurtidores[indice] = {
       ...arrSurtidores[indice],
@@ -376,7 +370,7 @@ export default function HabilitarTurno({ imprimir, status = "I", closeModal }) {
 
     const esValido = validarEstacionesTurno(
       config.turnoActivo,
-      estacionesUsuario
+      estacionesUsuario,
     );
 
     if (!esValido) {
@@ -418,10 +412,10 @@ export default function HabilitarTurno({ imprimir, status = "I", closeModal }) {
       }
     });
     const arrUniqueFilaCodesTransactor = Array.from(
-      uniqueFilaCodesTransactor
+      uniqueFilaCodesTransactor,
     ).sort((a, b) => parseInt(a) - parseInt(b));
     const validateData = filtersurtidores.filter(
-      (item) => item.galonaje === "" || parseFloat(item.galonaje) === 0
+      (item) => item.galonaje === "" || parseFloat(item.galonaje) === 0,
     );
     if (validateData.length === 0) {
       const dataUpdate = {
@@ -434,7 +428,7 @@ export default function HabilitarTurno({ imprimir, status = "I", closeModal }) {
           `api/v1/gasolinera/asignacion/turnos/update/status/${
             turnoActivo.asignacionturno_id ?? 0
           }`,
-          JSON.stringify(dataUpdate)
+          JSON.stringify(dataUpdate),
         )
         .then((resp) => {
           if (resp.data.status === 202) {
@@ -567,7 +561,7 @@ export default function HabilitarTurno({ imprimir, status = "I", closeModal }) {
                 }
                 const rowItems = estaciones.slice(
                   index,
-                  index + stationsPerRow
+                  index + stationsPerRow,
                 );
                 return (
                   <View key={index} style={styles.row}>

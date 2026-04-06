@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import CustomAppBar from "./CustomAppBar";
 import {
   FlatList,
@@ -49,10 +49,10 @@ export default function ResumenModalComponent(props) {
         style={[
           styles.card,
           {
-            borderTopLeftRadius: isFirst ? 18 : 5,
-            borderTopRightRadius: isFirst ? 18 : 5,
-            borderBottomLeftRadius: isLast ? 18 : 5,
-            borderBottomRightRadius: isLast ? 18 : 5,
+            borderTopLeftRadius: isFirst ? 15 : 5,
+            borderTopRightRadius: isFirst ? 15 : 5,
+            borderBottomLeftRadius: isLast ? 15 : 5,
+            borderBottomRightRadius: isLast ? 15 : 5,
           },
         ]}
       >
@@ -221,10 +221,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     height: 40,
     marginRight: 8,
-  },
-  tabScrollContainer: {
-    paddingHorizontal: 10,
-    height: 40,
   },
   activeTab: {
     backgroundColor: "#ed9800",

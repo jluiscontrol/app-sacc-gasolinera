@@ -1,14 +1,5 @@
-import React from "react";
-import {
-  Pressable,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from "react-native";
-import CustomAppBar from "./CustomAppBar";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 import { Button, TextInput } from "react-native-paper";
-import CustomButton from "./CustomButton";
 import { sharedStyles } from "../styles/SharedStyles";
 
 export default function PruebasTecnicasModalComponent(props) {

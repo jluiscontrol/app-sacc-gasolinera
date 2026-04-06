@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Modal } from "react-native";
-import { Portal, Dialog, Button, Text, useTheme } from "react-native-paper";
+import { Dialog, Button, Text, useTheme } from "react-native-paper";
 
 let showAlertFn;
 

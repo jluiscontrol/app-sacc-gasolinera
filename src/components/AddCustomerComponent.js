@@ -7,9 +7,9 @@ import {
   ScrollView,
   Alert,
   ToastAndroid,
-  StyleSheet
+  StyleSheet,
 } from "react-native";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import Loader from "./Loader";
 import CustomAppBar from "./CustomAppBar";
 import { TextInput } from "react-native-paper";
@@ -19,7 +19,12 @@ import CustomCheckBox from "./CustomCheckBox";
 import { getToken, validateIdentificacion } from "../utils/Utils";
 import instance from "../utils/Instance";
 
-export default function AddCustomerComponent({ closeModal, periodofiscal_id, parametrizacion, config }) {
+export default function AddCustomerComponent({
+  closeModal,
+  periodofiscal_id,
+  parametrizacion,
+  config,
+}) {
   const [isLoading, setIsLoading] = useState(false);
   const [listTipoIdentificacion, setListTipoIdentificacion] = useState([]);
   const [listEstadoCivil, setListEstadoCivil] = useState([]);
@@ -54,7 +59,6 @@ export default function AddCustomerComponent({ closeModal, periodofiscal_id, par
     porcentaje_descuento: 0,
   });
 
-
   useEffect(() => {
     async function getInformation() {
       const localstorage = await getToken("configuration");
@@ -77,9 +81,9 @@ export default function AddCustomerComponent({ closeModal, periodofiscal_id, par
       } else if (cleaned.length > 4) {
         formatted = `${cleaned.slice(0, 2)}/${cleaned.slice(2, 4)}/${cleaned.slice(4, 8)}`;
       }
-      setFormFields(prev => ({ ...prev, [name]: formatted }));
+      setFormFields((prev) => ({ ...prev, [name]: formatted }));
     } else {
-      setFormFields(prev => ({ ...prev, [name]: value }));
+      setFormFields((prev) => ({ ...prev, [name]: value }));
     }
   };
 
@@ -111,53 +115,111 @@ export default function AddCustomerComponent({ closeModal, periodofiscal_id, par
       porcentaje_descuento,
     } = formFields;
 
-    if (ct_tipoidentificacion_id && numeroidentificacion && nombrecompleto.trim() !== '' && ciudad_id && ct_estadocivil && ct_sexo && direccion.length > 0) {
+    if (
+      ct_tipoidentificacion_id &&
+      numeroidentificacion &&
+      nombrecompleto.trim() !== "" &&
+      ciudad_id &&
+      ct_estadocivil &&
+      ct_sexo &&
+      direccion.length > 0
+    ) {
       const identificacion = numeroidentificacion.trim();
       let validIdentificacion;
-      let tipoIdentificacion = listTipoIdentificacion.find(x => x.id === parseInt(ct_tipoidentificacion_id));
-      if(tipoIdentificacion.name == "CEDULA"){
+      let tipoIdentificacion = listTipoIdentificacion.find(
+        (x) => x.id === parseInt(ct_tipoidentificacion_id),
+      );
+      if (tipoIdentificacion.name == "CEDULA") {
         validIdentificacion = validateIdentificacion(identificacion);
       } else if (tipoIdentificacion.name == "RUC") {
         validIdentificacion = validateIdentificacion(identificacion);
       } else {
         validIdentificacion = true;
       }
-      if(validIdentificacion){
+      if (validIdentificacion) {
         setIsLoading(true);
         const fechaFormateada = fechanacimiento.replace(/\//g, "-");
-        instance.post(`api/v1/cartera/cliente`, {
-          ct_tipoidentificacion_id, numeroidentificacion:identificacion, nombrecompleto, nombres, apellidos, direccion, telefono,
-          telefonocelular, ct_estadocivil, ciudad_id, fechanacimiento: fechaFormateada, ct_sexo, correopersonal, correoinstitucional, discapacidad,
-          extranjero, nombrecomercial, listaprecio_identificador, observacion, periodofiscal_id, profesional, cupocredito, diascreditoplazo, porcentaje_descuento
-        }, config)
-          .then(resp => {
-            if (resp.data.message === 'Created') {
+        instance
+          .post(
+            `api/v1/cartera/cliente`,
+            {
+              ct_tipoidentificacion_id,
+              numeroidentificacion: identificacion,
+              nombrecompleto,
+              nombres,
+              apellidos,
+              direccion,
+              telefono,
+              telefonocelular,
+              ct_estadocivil,
+              ciudad_id,
+              fechanacimiento: fechaFormateada,
+              ct_sexo,
+              correopersonal,
+              correoinstitucional,
+              discapacidad,
+              extranjero,
+              nombrecomercial,
+              listaprecio_identificador,
+              observacion,
+              periodofiscal_id,
+              profesional,
+              cupocredito,
+              diascreditoplazo,
+              porcentaje_descuento,
+            },
+            config,
+          )
+          .then((resp) => {
+            if (resp.data.message === "Created") {
               setIsLoading(false);
-              ToastAndroid.show("El cliente se ha registrado correctamente!", ToastAndroid.SHORT);
+              ToastAndroid.show(
+                "El cliente se ha registrado correctamente!",
+                ToastAndroid.SHORT,
+              );
               closeModal(true);
               //actionRefresh(!statusRefresh);
             }
-          }).catch(err => {
-          if (err.response.data.error) {
-            const errorHandle = err.response.data.error;
-            Alert.alert("Error al registrar el Cliente!", `${errorHandle.message}`);
-          }
-          setIsLoading(false);
-        });
-      }else{
-        Alert.alert("Informacion", "Numero de identificacion invalido, formato invalido, verifique!");
+          })
+          .catch((err) => {
+            if (err.response.data.error) {
+              const errorHandle = err.response.data.error;
+              Alert.alert(
+                "Error al registrar el Cliente!",
+                `${errorHandle.message}`,
+              );
+            }
+            setIsLoading(false);
+          });
+      } else {
+        Alert.alert(
+          "Informacion",
+          "Numero de identificacion invalido, formato invalido, verifique!",
+        );
       }
     } else {
       if (!ct_tipoidentificacion_id) {
-        Alert.alert("Información", "Falta el tipo de identificación, por favor verifique.");
+        Alert.alert(
+          "Información",
+          "Falta el tipo de identificación, por favor verifique.",
+        );
       } else if (!numeroidentificacion) {
-        Alert.alert("Información", "Falta el número de identificación, por favor verifique.");
-      } else if (nombrecompleto.trim() === '') {
-        Alert.alert("Información", "Falta el nombre completo, por favor verifique.");
+        Alert.alert(
+          "Información",
+          "Falta el número de identificación, por favor verifique.",
+        );
+      } else if (nombrecompleto.trim() === "") {
+        Alert.alert(
+          "Información",
+          "Falta el nombre completo, por favor verifique.",
+        );
       } else if (!ciudad_id) {
         Alert.alert("Información", "Falta la ciudad, por favor verifique.");
       } else if (!ct_estadocivil) {
-        Alert.alert("Información", "Falta el estado civil, por favor verifique.");
+        Alert.alert(
+          "Información",
+          "Falta el estado civil, por favor verifique.",
+        );
       } else if (!ct_sexo) {
         Alert.alert("Información", "Falta el sexo, por favor verifique.");
       } else if (direccion.length === 0) {
@@ -193,93 +255,113 @@ export default function AddCustomerComponent({ closeModal, periodofiscal_id, par
           contentContainerStyle={{ paddingBottom: 100 }}
           keyboardShouldPersistTaps="handled"
         >
-
           <View style={{ paddingHorizontal: 5 }}>
             <CustomPicker
               text={
-                !formFields.ct_tipoidentificacion_id || formFields.ct_tipoidentificacion_id === 0
+                !formFields.ct_tipoidentificacion_id ||
+                formFields.ct_tipoidentificacion_id === 0
                   ? "SELECCIONE UN TIPO IDENTIFICACION"
-                  : (
-                    listTipoIdentificacion.find(item => item.id === formFields.ct_tipoidentificacion_id)?.name
-                    || "SELECCIONE UN TIPO IDENTIFICACION"
-                  )
+                  : listTipoIdentificacion.find(
+                      (item) => item.id === formFields.ct_tipoidentificacion_id,
+                    )?.name || "SELECCIONE UN TIPO IDENTIFICACION"
               }
-              items={listTipoIdentificacion.map(campo => ({
+              items={listTipoIdentificacion.map((campo) => ({
                 label: campo.name,
                 value: campo.id,
               }))}
               selectedValue={formFields.ct_tipoidentificacion_id}
-              onValueChange={(value) => handleChange("ct_tipoidentificacion_id", value)}
+              onValueChange={(value) =>
+                handleChange("ct_tipoidentificacion_id", value)
+              }
             />
-            <TextInput mode={"outlined"}
-                       value={formFields.numeroidentificacion}
-                       onChangeText={(value) => handleChange("numeroidentificacion", value)}
-                       label="Número de Identificación" />
-            <TextInput mode={"outlined"}
-                       value={formFields.nombrecompleto}
-                       onChangeText={(value) => handleChange("nombrecompleto", value)}
-                       label="Nombres Completos" />
+            <TextInput
+              mode={"outlined"}
+              value={formFields.numeroidentificacion}
+              onChangeText={(value) =>
+                handleChange("numeroidentificacion", value)
+              }
+              label="Número de Identificación"
+            />
+            <TextInput
+              mode={"outlined"}
+              value={formFields.nombrecompleto}
+              onChangeText={(value) => handleChange("nombrecompleto", value)}
+              label="Nombres Completos"
+            />
 
             <View style={styles.container}>
-              <TextInput style={{ flex: 1 }}
-                         mode={"outlined"}
-                         value={formFields.nombres}
-                         onChangeText={(value) => handleChange("nombres", value)}
-                         label="Nombres" />
+              <TextInput
+                style={{ flex: 1 }}
+                mode={"outlined"}
+                value={formFields.nombres}
+                onChangeText={(value) => handleChange("nombres", value)}
+                label="Nombres"
+              />
               <View style={{ width: 5 }} />
-              <TextInput style={{ flex: 1 }}
-                         mode={"outlined"}
-                         value={formFields.apellidos}
-                         onChangeText={(value) => handleChange("apellidos", value)}
-                         label="Apellidos" />
+              <TextInput
+                style={{ flex: 1 }}
+                mode={"outlined"}
+                value={formFields.apellidos}
+                onChangeText={(value) => handleChange("apellidos", value)}
+                label="Apellidos"
+              />
             </View>
 
-            <TextInput style={{ flex: 1, paddingVertical: 10 }}
-                       mode={"outlined"}
-                       value={formFields.direccion}
-                       onChangeText={(value) => handleChange("direccion", value)}
-                       multiline={true}
-                       label="Direccion" />
+            <TextInput
+              style={{ flex: 1, paddingVertical: 10 }}
+              mode={"outlined"}
+              value={formFields.direccion}
+              onChangeText={(value) => handleChange("direccion", value)}
+              multiline={true}
+              label="Direccion"
+            />
             <View style={styles.container}>
-              <TextInput style={{ flex: 1 }}
-                         mode={"outlined"}
-                         keyboardType={"numeric"}
-                         value={formFields.telefono}
-                         onChangeText={(value) => handleChange("telefono", value)}
-                         label="Telefono Convencional" />
+              <TextInput
+                style={{ flex: 1 }}
+                mode={"outlined"}
+                keyboardType={"numeric"}
+                value={formFields.telefono}
+                onChangeText={(value) => handleChange("telefono", value)}
+                label="Telefono Convencional"
+              />
               <View style={{ width: 5 }} />
-              <TextInput style={{ flex: 1 }}
-                         mode={"outlined"}
-                         value={formFields.telefonocelular}
-                         onChangeText={(value) => handleChange("telefonocelular", value)}
-                         keyboardType={"numeric"}
-                         label="Telefono Celular" />
+              <TextInput
+                style={{ flex: 1 }}
+                mode={"outlined"}
+                value={formFields.telefonocelular}
+                onChangeText={(value) => handleChange("telefonocelular", value)}
+                keyboardType={"numeric"}
+                label="Telefono Celular"
+              />
             </View>
             <View style={styles.container}>
-              <TextInput style={{ flex: 1 }}
-                         mode={"outlined"}
-                         keyboardType={"numeric"}
-                         value={formFields.fechanacimiento}
-                         onChangeText={(value) => handleChange("fechanacimiento", value)}
-                         placeholder={"DD/MM/YYYY"}
-                         label="Fecha de Nacimiento" />
+              <TextInput
+                style={{ flex: 1 }}
+                mode={"outlined"}
+                keyboardType={"numeric"}
+                value={formFields.fechanacimiento}
+                onChangeText={(value) => handleChange("fechanacimiento", value)}
+                placeholder={"DD/MM/YYYY"}
+                label="Fecha de Nacimiento"
+              />
               <View style={{ width: 5 }} />
-              <TextInput style={{ flex: 1 }}
-                         mode={"outlined"}
-                         value={formFields.nombrecomercial}
-                         onChangeText={(value) => handleChange("nombrecomercial", value)}
-                         label="Nombre Comercial" />
+              <TextInput
+                style={{ flex: 1 }}
+                mode={"outlined"}
+                value={formFields.nombrecomercial}
+                onChangeText={(value) => handleChange("nombrecomercial", value)}
+                label="Nombre Comercial"
+              />
             </View>
             <CustomPicker
               text={
                 !formFields.ct_estadocivil || formFields.ct_estadocivil === 0
                   ? "SELECCIONE UN ESTADO CIVIL"
-                  : (
-                    listEstadoCivil.find(item => item.id === formFields.ct_estadocivil)?.name
-                    || "SELECCIONE UN ESTADO CIVIL"
-                  )
+                  : listEstadoCivil.find(
+                      (item) => item.id === formFields.ct_estadocivil,
+                    )?.name || "SELECCIONE UN ESTADO CIVIL"
               }
-              items={listEstadoCivil.map(campo => ({
+              items={listEstadoCivil.map((campo) => ({
                 label: campo.name,
                 value: campo.id,
               }))}
@@ -290,12 +372,10 @@ export default function AddCustomerComponent({ closeModal, periodofiscal_id, par
               text={
                 !formFields.ct_sexo || formFields.ct_sexo === 0
                   ? "SELECCIONE UN SEXO"
-                  : (
-                    listSexo.find(item => item.id === formFields.ct_sexo)?.name
-                    || "SELECCIONE UN SEXO"
-                  )
+                  : listSexo.find((item) => item.id === formFields.ct_sexo)
+                      ?.name || "SELECCIONE UN SEXO"
               }
-              items={listSexo.map(campo => ({
+              items={listSexo.map((campo) => ({
                 label: campo.name,
                 value: campo.id,
               }))}
@@ -303,25 +383,32 @@ export default function AddCustomerComponent({ closeModal, periodofiscal_id, par
               onValueChange={(value) => handleChange("ct_sexo", value)}
             />
 
-            <TextInput style={{ flex: 1 }}
-                       mode={"outlined"}
-                       keyboardType={"email-address"}
-                       value={formFields.correopersonal}
-                       onChangeText={(value) => handleChange("correopersonal", value)}
-                       label="Correo Personal" />
-            <TextInput style={{ flex: 1 }}
-                       mode={"outlined"}
-                       value={formFields.correoinstitucional}
-                       onChangeText={(value) => handleChange("correoinstitucional", value)}
-                       keyboardType={"email-address"}
-                       label="Correo Institucional" />
+            <TextInput
+              style={{ flex: 1 }}
+              mode={"outlined"}
+              keyboardType={"email-address"}
+              value={formFields.correopersonal}
+              onChangeText={(value) => handleChange("correopersonal", value)}
+              label="Correo Personal"
+            />
+            <TextInput
+              style={{ flex: 1 }}
+              mode={"outlined"}
+              value={formFields.correoinstitucional}
+              onChangeText={(value) =>
+                handleChange("correoinstitucional", value)
+              }
+              keyboardType={"email-address"}
+              label="Correo Institucional"
+            />
 
             <CustomCheckBox
               title={"Discapacitado"}
               checked={formFields.discapacidad}
               onPress={() =>
                 setFormFields((prev) => ({
-                  ...prev, discapacidad: !prev.discapacidad,
+                  ...prev,
+                  discapacidad: !prev.discapacidad,
                 }))
               }
             />
@@ -330,7 +417,8 @@ export default function AddCustomerComponent({ closeModal, periodofiscal_id, par
               checked={formFields.extranjero}
               onPress={() =>
                 setFormFields((prev) => ({
-                  ...prev, extranjero: !prev.extranjero,
+                  ...prev,
+                  extranjero: !prev.extranjero,
                 }))
               }
             />
@@ -339,7 +427,8 @@ export default function AddCustomerComponent({ closeModal, periodofiscal_id, par
               checked={formFields.profesional}
               onPress={() =>
                 setFormFields((prev) => ({
-                  ...prev, profesional: !prev.profesional,
+                  ...prev,
+                  profesional: !prev.profesional,
                 }))
               }
             />
@@ -356,5 +445,5 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
-  }
-})
+  },
+});

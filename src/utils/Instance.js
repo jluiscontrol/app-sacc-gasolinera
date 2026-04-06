@@ -28,7 +28,7 @@ instance.interceptors.request.use(
     if (status === 401) {
     }
     return Promise.reject(error);
-  }
+  },
 );
 
 export default instance;

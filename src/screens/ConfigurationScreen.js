@@ -1,25 +1,13 @@
-import {
-  View,
-  Text,
-  StyleSheet,
-  Alert,
-  Modal,
-  Pressable,
-  FlatList,
-} from "react-native";
-import React, { useEffect, useState } from "react";
+import { View, Text, StyleSheet, Pressable, FlatList } from "react-native";
+import { useEffect, useState } from "react";
 import { useNavigation } from "@react-navigation/native";
-import { windowWidth } from "../utils/Dimensions";
 import useAuthStore from "../stores/AuthStore";
 import { getToken, mergeStorage } from "../utils/Utils";
 import instance from "../utils/Instance";
 import Loader from "../components/Loader";
 import CustomAppBar from "../components/CustomAppBar";
 import CustomCheckBox from "../components/CustomCheckBox";
-import {
-  useSafeAreaInsets,
-  SafeAreaView,
-} from "react-native-safe-area-context";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { showAlert } from "../components/CustomAlert";
 import GlobalIcon from "../components/GlobalIcon";
 import { Colors } from "../utils/Colors";
@@ -133,7 +121,7 @@ export default function ConfigurationScreen() {
 
       try {
         const resp = await instance.get(
-          `api/v1/general/datos/maestros/configuracion/usuario/${periodoFiscal}`
+          `api/v1/general/datos/maestros/configuracion/usuario/${periodoFiscal}`,
         );
         if (resp.data.status === 200) {
           const uniqueStations = new Map();
@@ -169,7 +157,7 @@ export default function ConfigurationScreen() {
               defaultCiudad: resp.data.defaultCiudad,
               defaultPais: resp.data.defaultPais,
             },
-            "configuration"
+            "configuration",
           );
 
           setdatosEstaciones(data);
@@ -388,11 +376,6 @@ export default function ConfigurationScreen() {
 }
 
 const styles = StyleSheet.create({
-  contentModal: {
-    flex: 1,
-    backgroundColor: "white",
-    padding: 20,
-  },
   sectionBox: {
     marginBottom: 30,
     borderRadius: 18,

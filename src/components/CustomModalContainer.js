@@ -72,7 +72,7 @@ export default function CustomModalContainer({
         },
         () => {
           runOnJS(setInternalVisible)(false);
-        }
+        },
       );
     }
   }, [visible]);
@@ -87,7 +87,7 @@ export default function CustomModalContainer({
       () => {
         runOnJS(setInternalVisible)(false);
         runOnJS(onClose)();
-      }
+      },
     );
   }, [onClose]);
 

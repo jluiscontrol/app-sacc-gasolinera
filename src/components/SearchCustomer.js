@@ -10,11 +10,11 @@ import {
   SafeAreaView,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { getToken } from "../utils/Utils";
 import Loader from "./Loader";
 import instance from "../utils/Instance";
-import { Divider, SegmentedButtons, TextInput } from "react-native-paper";
+import { SegmentedButtons, TextInput } from "react-native-paper";
 import CustomAppBar from "./CustomAppBar";
 import { sharedStyles } from "../styles/SharedStyles";
 import GlobalIcon from "./GlobalIcon";
@@ -68,20 +68,20 @@ export default function SearchCustomer(props) {
             type_search: selectedOption,
             ismobile: true,
           },
-        }
+        },
       );
       if (response.data.status === 200) {
         setClientes(response.data.items);
       } else {
         Alert.alert(
           "Información",
-          "Hubo un problema al consultar los clientes"
+          "Hubo un problema al consultar los clientes",
         );
       }
     } catch (error) {
       Alert.alert(
         "Alerta",
-        "Hubo un problema al consultar los clientes en el servidor"
+        "Hubo un problema al consultar los clientes en el servidor",
       );
     } finally {
       setIsLoading(false);

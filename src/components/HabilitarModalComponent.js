@@ -1,5 +1,4 @@
 import { View, Text, StyleSheet, Pressable } from "react-native";
-import CustomAppBar from "./CustomAppBar";
 import { Button, TextInput } from "react-native-paper";
 import { sharedStyles } from "../styles/SharedStyles";
 

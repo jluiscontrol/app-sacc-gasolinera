@@ -1,4 +1,3 @@
-import React from "react";
 import { StyleSheet, View, Modal } from "react-native";
 import { SkypeIndicator } from "react-native-indicators";
 import { Colors } from "../utils/Colors";

@@ -3,14 +3,13 @@ import AppStackNavigator from "./AppDrawerNavigator";
 import AuthStackNavigator from "./AuthStackNavigator";
 import { useEffect, useState, useRef } from "react";
 import {
-  decodeJWT,
   decodeJWTFechaexp,
   getToken,
   removeStoragePropFromObject,
 } from "../utils/Utils";
 import Loader from "../components/Loader";
 import { connectSocket, getSocket } from "../utils/socket";
-import { Alert, AppState } from "react-native";
+import { AppState } from "react-native";
 import { showAlert } from "../components/CustomAlert";
 
 export default function Navigator() {
@@ -42,7 +41,7 @@ export default function Navigator() {
 
     const subscription = AppState.addEventListener(
       "change",
-      handleAppStateChange
+      handleAppStateChange,
     );
 
     return () => {
@@ -58,7 +57,7 @@ export default function Navigator() {
       let socketParam = {};
       try {
         socketParam = JSON.parse(
-          configuration?.contribuyente?.apisocket ?? "{}"
+          configuration?.contribuyente?.apisocket ?? "{}",
         );
       } catch (e) {}
       const socket = getSocket();
@@ -91,7 +90,7 @@ export default function Navigator() {
         if (fechaExpToken.exp < Date.now() / 1000) {
           const removed = removeStoragePropFromObject(
             "configuration",
-            "encodetoken"
+            "encodetoken",
           ).then((removed) => {
             return true;
           });

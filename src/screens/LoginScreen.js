@@ -3,7 +3,6 @@ import {
   View,
   Text,
   Linking,
-  Alert,
   Modal,
   Pressable,
   StyleSheet,
@@ -11,7 +10,6 @@ import {
 } from "react-native";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import WhatsappSVG from "../../assets/images/misc/whatsapp.svg";
-import LoginSVG from "../../assets/images/misc/login.svg";
 import FacebookSVG from "../../assets/images/misc/facebook.svg";
 import InstagramSVG from "../../assets/images/misc/instagram.svg";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
@@ -47,7 +45,7 @@ export default function LoginScreen() {
     useCallback(() => {
       getLicensed();
       return () => {};
-    }, [])
+    }, []),
   );
 
   const groupedData = usuario.periodosfiscales.reduce((acc, obj) => {
@@ -109,7 +107,7 @@ export default function LoginScreen() {
       const response = res.data;
       mergeStorage(
         { encodetoken: response.access_token, userData: response.user },
-        "configuration"
+        "configuration",
       );
       setIsLoading(false);
       setUsuario(response.user);
@@ -131,12 +129,12 @@ export default function LoginScreen() {
 
   const loginDatosMaestros = async (
     periodofiscal = periodofiscal_id,
-    usuarioData = usuario
+    usuarioData = usuario,
   ) => {
     setIsLoading(true);
     try {
       const resp = await instance.get(
-        `api/v1/general/datos/maestros/configuracion/usuario/${periodofiscal}`
+        `api/v1/general/datos/maestros/configuracion/usuario/${periodofiscal}`,
       );
       if (resp.data.status === 200) {
         mergeStorage(
@@ -163,7 +161,7 @@ export default function LoginScreen() {
             defaultCiudad: resp.data.defaultCiudad,
             defaultPais: resp.data.defaultPais,
           },
-          "configuration"
+          "configuration",
         );
         try {
           let socketParam = {};
@@ -178,7 +176,7 @@ export default function LoginScreen() {
               headers: {
                 "Content-Type": "application/json",
               },
-            }
+            },
           );
         } catch (error) {}
         await login();
@@ -412,7 +410,7 @@ export default function LoginScreen() {
             <Pressable
               onPress={() =>
                 Linking.openURL(
-                  `https://api.whatsapp.com/send?phone=593992671556`
+                  `https://api.whatsapp.com/send?phone=593992671556`,
                 )
               }
               style={({ pressed }) => [

@@ -8,19 +8,16 @@ import {
   Platform,
   Keyboard,
   TouchableWithoutFeedback,
-  Alert,
   Pressable,
-  Touchable,
 } from "react-native";
 import React from "react";
 import CustomAppBar from "./CustomAppBar";
 import SearchCustomer from "./SearchCustomer";
 import CustomPicker from "./CustomPicker";
-import { Button, Chip, TextInput, Tooltip } from "react-native-paper";
+import { Button, Chip, TextInput } from "react-native-paper";
 import PersonaSVG from "../../assets/images/misc/user.svg";
 import SettinsSVG from "../../assets/images/misc/settings.svg";
 import CustomCheckBox from "./CustomCheckBox";
-import CustomButton from "./CustomButton";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import { sharedStyles } from "../styles/SharedStyles";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -73,6 +70,7 @@ function DispensarModalComponent(props) {
     setSearchListModal,
     closeModal,
     isloading,
+    findEstadoSelectedSurtidor,
   } = props;
 
   return (
@@ -404,32 +402,25 @@ function DispensarModalComponent(props) {
                     ? "Valor Total:"
                     : "Valor en Dolares:"}
                 </Text>
-                <View
-                  style={{
-                    width: 160,
-                    height: 70,
-                    backgroundColor: "#95f995",
-                    justifyContent: "center",
-                    alignItems: "center",
-                    borderRadius: 10,
-                  }}
-                >
-                  <TextInput
-                    keyboardType={"numeric"}
-                    style={styles.input}
-                    underlineColor={"transparent"}
-                    onChangeText={(value) =>
-                      changeValoresDespache("dolares", value, "galones")
-                    }
-                    readOnly={selectedSurtidor?.proforma}
-                    value={
-                      selectedSurtidor?.proforma
-                        ? valores.dolares.toString()
-                        : valorDispensar.dolares.toString()
-                    }
-                    selectTextOnFocus={true}
-                  />
-                </View>
+                <TextInput
+                  mode="outlined"
+                  keyboardType="numeric"
+                  label=""
+                  onChangeText={(value) =>
+                    changeValoresDespache("dolares", value, "galones")
+                  }
+                  readOnly={selectedSurtidor?.proforma}
+                  value={
+                    selectedSurtidor?.proforma
+                      ? valores.dolares.toString()
+                      : valorDispensar.dolares.toString()
+                  }
+                  selectTextOnFocus={true}
+                  outlineColor="#95f995"
+                  activeOutlineColor="black"
+                  style={[styles.amountInput, { backgroundColor: "#95f995" }]}
+                  contentStyle={styles.amountContent}
+                />
               </View>
               <View style={{ width: 10 }} />
               <View style={styles.containerDataSurtidor}>
@@ -438,32 +429,25 @@ function DispensarModalComponent(props) {
                     ? "Galones:"
                     : "Valor en Galones:"}
                 </Text>
-                <View
-                  style={{
-                    width: 160,
-                    height: 70,
-                    backgroundColor: "#ffb400",
-                    justifyContent: "center",
-                    alignItems: "center",
-                    borderRadius: 10,
-                  }}
-                >
-                  <TextInput
-                    keyboardType={"numeric"}
-                    style={styles.input}
-                    underlineColor={"transparent"}
-                    onChangeText={(value) =>
-                      changeValoresDespache("galones", value, "dolares")
-                    }
-                    readOnly={selectedSurtidor?.proforma}
-                    value={
-                      selectedSurtidor?.proforma
-                        ? valores.galones.toString()
-                        : valorDispensar.galones.toString()
-                    }
-                    selectTextOnFocus={true}
-                  />
-                </View>
+                <TextInput
+                  mode="outlined"
+                  keyboardType="numeric"
+                  label=""
+                  value={
+                    selectedSurtidor?.proforma
+                      ? valores.galones.toString()
+                      : valorDispensar.galones.toString()
+                  }
+                  onChangeText={(value) =>
+                    changeValoresDespache("galones", value, "dolares")
+                  }
+                  readOnly={selectedSurtidor?.proforma}
+                  selectTextOnFocus
+                  outlineColor="#ffb400"
+                  activeOutlineColor="black"
+                  style={[styles.amountInput, { backgroundColor: "#ffb400" }]}
+                  contentStyle={styles.amountContent}
+                />
               </View>
             </View>
             {selectedSurtidor && !selectedSurtidor.proforma && (
@@ -509,11 +493,28 @@ function DispensarModalComponent(props) {
                       )}
                   </View>
                 )}
-                <Button mode="contained" onPress={() => searchPlaca(true)}>
-                  Habilitar Dispensador
-                </Button>
+                {!(
+                  findEstadoSelectedSurtidor() === "FACTURAR" &&
+                  parametrizacion.habilitarPrimeroyFacturar
+                ) && (
+                  <Button mode="contained" onPress={() => searchPlaca(true)}>
+                    Habilitar Dispensador
+                  </Button>
+                )}
               </View>
             )}
+            {parametrizacion.habilitarPrimeroyFacturar &&
+              selectedSurtidor &&
+              !selectedSurtidor.proforma &&
+              findEstadoSelectedSurtidor() === "FACTURAR" && (
+                <>
+                  <View style={{ marginTop: 10 }}>
+                    <Button mode="contained" onPress={() => sendFacturacion()}>
+                      Guardar Factura
+                    </Button>
+                  </View>
+                </>
+              )}
             {selectedSurtidor && selectedSurtidor.proforma && (
               <>
                 <View style={{ marginTop: 10 }}>
@@ -549,9 +550,11 @@ function DispensarModalComponent(props) {
                 </View>
               )}
             {selectedSurtidor &&
-              !selectedSurtidor.isFacturaAnticipo &&
-              selectedSurtidor.proforma &&
-              !selectedSurtidor?.proforma?.pruebatecnica && (
+              ((selectedSurtidor.proforma &&
+                !selectedSurtidor?.proforma?.pruebatecnica) ||
+                (parametrizacion.habilitarPrimeroyFacturar &&
+                  !selectedSurtidor.proforma &&
+                  findEstadoSelectedSurtidor() === "FACTURAR")) && (
                 <>
                   {!objHeadBilling.autoconsumo && (
                     <>
@@ -848,6 +851,17 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
+  },
+  amountInput: {
+    width: 160,
+    height: 70,
+    borderRadius: 10,
+  },
+  amountContent: {
+    textAlign: "center",
+    fontSize: 28,
+    fontWeight: "600",
+    paddingVertical: 0,
   },
 });
 

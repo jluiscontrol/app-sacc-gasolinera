@@ -1,6 +1,5 @@
-import { View, Text, StyleSheet, Alert } from "react-native";
-import React, { useState } from "react";
-import CustomAppBar from "./CustomAppBar";
+import { View, Text, StyleSheet } from "react-native";
+import { useState } from "react";
 import { Button, TextInput } from "react-native-paper";
 import { currentDate } from "../utils/Utils";
 import instance from "../utils/Instance";
@@ -54,7 +53,7 @@ export default function DepositoModalComponent(props) {
         .post(
           "api/v1/facturacion/comprobante/ingresoegreso",
           dataComprobante,
-          config
+          config,
         )
         .then((resp) => {
           actionButtons.printerDeposito(resp.data.id);
@@ -73,27 +72,21 @@ export default function DepositoModalComponent(props) {
       <View style={{ paddingHorizontal: 20 }}>
         <View style={{ alignItems: "center" }}>
           <Text>Ingrese el valor a depositar:</Text>
-          <View
-            style={{
-              width: 160,
-              height: 70,
-              backgroundColor: "#95f995",
-              marginTop: 10,
-              justifyContent: "center",
-              alignItems: "center",
-              borderRadius: 10,
-            }}
-          >
-            <TextInput
-              keyboardType={"numeric"}
-              style={styles.input}
-              selectTextOnFocus={true}
-              placeholder={"0"}
-              underlineColor={"transparent"}
-              onChangeText={(value) => setValorDeposito(value)}
-              value={valorDeposito === "0" ? "" : valorDeposito}
-            />
-          </View>
+
+          <TextInput
+            mode="outlined"
+            underlineColor="transparent"
+            activeUnderlineColor="green"
+            keyboardType={"numeric"}
+            selectTextOnFocus={true}
+            outlineColor="#95f995"
+            activeOutlineColor="black"
+            style={[styles.amountInput, { backgroundColor: "#95f995" }]}
+            contentStyle={styles.amountContent}
+            placeholder={"0"}
+            onChangeText={(value) => setValorDeposito(value)}
+            value={valorDeposito === "0" ? "" : valorDeposito}
+          />
           <TextInput
             style={{
               width: "80%",
@@ -139,5 +132,16 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     marginBottom: 10,
+  },
+  amountInput: {
+    width: 160,
+    height: 70,
+    borderRadius: 10,
+  },
+  amountContent: {
+    textAlign: "center",
+    fontSize: 28,
+    fontWeight: "600",
+    paddingVertical: 0,
   },
 });

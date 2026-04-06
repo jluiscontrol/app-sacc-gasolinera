@@ -1,6 +1,4 @@
-import React from "react";
 import { Text, Pressable, StyleSheet } from "react-native";
-import { sharedStyles } from "../styles/SharedStyles";
 import GlobalIcon from "./GlobalIcon";
 import { Colors } from "../utils/Colors";
 

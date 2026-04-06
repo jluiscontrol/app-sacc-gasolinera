@@ -1,4 +1,4 @@
-import { StyleSheet } from 'react-native';
+import { StyleSheet } from "react-native";
 
 export const sharedStyles = StyleSheet.create({
   pressed: {
@@ -6,16 +6,16 @@ export const sharedStyles = StyleSheet.create({
   },
   textInput: {
     fontSize: 15,
-    backgroundColor: "transparent"
+    backgroundColor: "transparent",
   },
   boquillasStyle: {
     width: 150,
     height: 50,
-    justifyContent: 'center',
+    justifyContent: "center",
     borderRadius: 15,
   },
   textBoquilla: {
-    textAlign: 'center',
-    fontWeight: '600',
-  }
+    textAlign: "center",
+    fontWeight: "600",
+  },
 });

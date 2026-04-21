@@ -181,8 +181,8 @@ export default function HomeScreen() {
 
   const [estadosTransactor, setEstadosTransactor] = useState({
     dispensando: ["Ap", "Aa", "At"],
-    cobrando: ["Ci", "Cu"],
-    cierrecaja: ["Ap", "Aa", "At", "Ci", "Cu"],
+    cobrando: ["Ci", "Cu", "Di"],
+    cierrecaja: ["Ap", "Aa", "At", "Ci", "Cu", "Di"],
   });
   const [objHeadBilling, setObjHeadBilling] = useState({
     n_transaccion: 0,
@@ -2557,11 +2557,7 @@ export default function HomeScreen() {
 
   const sendEgreso = () => {
     setIsLoading(true);
-    const objTransactor = arrDataTransactorSurtidores.find(
-      (data) =>
-        data.estado_transactor === "Ci" &&
-        data.codigofila_transactor === selectedSurtidor.codigo_transactor,
-    );
+    const objTransactor = arrDataTransactorSurtidores.find((data) => (data.estado_transactor === "Ci" || data.estado_transactor === "Di") && data.codigofila_transactor === selectedSurtidor.codigo_transactor);
     if (objTransactor) {
       const arrSurtidorFacturar = arrsurtidores.filter(
         (x) => x.codigo_transactor.split(",")[0] === objTransactor["0"],
@@ -2764,11 +2760,7 @@ export default function HomeScreen() {
     setIsLoading(true);
 
     try {
-      const objTransactor = arrDataTransactorSurtidores.find(
-        (data) =>
-          data.estado_transactor === "Ci" &&
-          data.codigofila_transactor === selectedSurtidor.codigo_transactor,
-      );
+      const objTransactor = arrDataTransactorSurtidores.find((data) => (data.estado_transactor === 'Ci' || data.estado_transactor === 'Di') && data.codigofila_transactor === selectedSurtidor.codigo_transactor);
 
       if (!validateFormatPlaca(objHeadBilling.placa.toUpperCase())) {
         throw new Error("Formato de placa invalida");
@@ -4111,11 +4103,7 @@ export default function HomeScreen() {
                                     surtidor = objInfoSurtidor ?? 0;
                                   }
 
-                                  const mostrarBotonBloqueo =
-                                    !dataLado.proforma &&
-                                    informationTransactor?.estado_transactor ===
-                                      "Ci" &&
-                                    parametrizacion.activarBotonDesbloquearSurtidor;
+                                  const mostrarBotonBloqueo = (!dataLado.proforma && (informationTransactor?.estado_transactor === 'Ci' || informationTransactor?.estado_transactor === 'Di') ) && parametrizacion.activarBotonDesbloquearSurtidor;
 
                                   return (
                                     <View

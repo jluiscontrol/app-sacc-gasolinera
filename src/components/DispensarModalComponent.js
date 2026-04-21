@@ -832,7 +832,7 @@ function DispensarModalComponent(props) {
                       justifyContent: "center",
                     }}
                   >
-                    {parametrizacion.habilitaPagosConDeUna &&
+                    {false /*parametrizacion.habilitaPagosConDeUna*/ &&
                       objHeadBilling.tipoventa !== "CR" &&
                       !objHeadBilling.autoconsumo && (
                         <View style={styles.containerDeUna}>
@@ -854,7 +854,7 @@ function DispensarModalComponent(props) {
                           </Pressable>
                         </View>
                       )}
-                    {parametrizacion.habilitaPagosConPINPAD &&
+                    {false /*parametrizacion.habilitaPagosConPINPAD*/ &&
                       objHeadBilling.tipoventa !== "CR" &&
                       !objHeadBilling.autoconsumo && (
                         <View style={styles.containerDeUna}>

@@ -50,7 +50,7 @@ import PagoDeUnaComponent from "../components/PagoDeUnaComponent";
 import PagoPinPadComponent from "../components/PagoPinPadComponent";
 
 export default function HomeScreen() {
-  const isDesarrollo = true;
+  const isDesarrollo = false;
 
   const isDrawerOpen = useDrawerStatus() === "open";
   const showModal = useModalStore((state) => state.showModal);
@@ -181,8 +181,8 @@ export default function HomeScreen() {
 
   const [estadosTransactor, setEstadosTransactor] = useState({
     dispensando: ["Ap", "Aa", "At"],
-    cobrando: ["Ci", "Cu", "Di"],
-    cierrecaja: ["Ap", "Aa", "At", "Ci", "Cu", "Di"],
+    cobrando: ["Ci", "Cu"],
+    cierrecaja: ["Ap", "Aa", "At", "Ci", "Cu"],
   });
   const [objHeadBilling, setObjHeadBilling] = useState({
     n_transaccion: 0,
@@ -1298,7 +1298,7 @@ export default function HomeScreen() {
               ? JSON.parse(cliente.placas)
               : [];
             const objPlaca = placasCliente.find(
-              (x) => (x.placa ?? "").toUpperCase() === (placa ?? "").toUpperCase(),
+              (x) => x.placa.toUpperCase() === placa.toUpperCase(),
             );
             let placaHabilitadaCredito = false;
 
@@ -1420,7 +1420,7 @@ export default function HomeScreen() {
         setIsLoading(false);
         showAlert({
           title: "Error",
-          message: `Error al consultar la proforma del surtidor. \n${error}`,
+          message: "Error al consultar la proforma del surtidor.",
         });
       }
     }
@@ -2557,7 +2557,11 @@ export default function HomeScreen() {
 
   const sendEgreso = () => {
     setIsLoading(true);
-    const objTransactor = arrDataTransactorSurtidores.find((data) => (data.estado_transactor === "Ci" || data.estado_transactor === "Di") && data.codigofila_transactor === selectedSurtidor.codigo_transactor);
+    const objTransactor = arrDataTransactorSurtidores.find(
+      (data) =>
+        data.estado_transactor === "Ci" &&
+        data.codigofila_transactor === selectedSurtidor.codigo_transactor,
+    );
     if (objTransactor) {
       const arrSurtidorFacturar = arrsurtidores.filter(
         (x) => x.codigo_transactor.split(",")[0] === objTransactor["0"],
@@ -2760,7 +2764,11 @@ export default function HomeScreen() {
     setIsLoading(true);
 
     try {
-      const objTransactor = arrDataTransactorSurtidores.find((data) => (data.estado_transactor === 'Ci' || data.estado_transactor === 'Di') && data.codigofila_transactor === selectedSurtidor.codigo_transactor);
+      const objTransactor = arrDataTransactorSurtidores.find(
+        (data) =>
+          data.estado_transactor === "Ci" &&
+          data.codigofila_transactor === selectedSurtidor.codigo_transactor,
+      );
 
       if (!validateFormatPlaca(objHeadBilling.placa.toUpperCase())) {
         throw new Error("Formato de placa invalida");
@@ -4103,7 +4111,11 @@ export default function HomeScreen() {
                                     surtidor = objInfoSurtidor ?? 0;
                                   }
 
-                                  const mostrarBotonBloqueo = (!dataLado.proforma && (informationTransactor?.estado_transactor === 'Ci' || informationTransactor?.estado_transactor === 'Di') ) && parametrizacion.activarBotonDesbloquearSurtidor;
+                                  const mostrarBotonBloqueo =
+                                    !dataLado.proforma &&
+                                    informationTransactor?.estado_transactor ===
+                                      "Ci" &&
+                                    parametrizacion.activarBotonDesbloquearSurtidor;
 
                                   return (
                                     <View

@@ -6,12 +6,11 @@ export const apiPrinter = "http://192.168.100.194:3001";
 const storeToken = async (authData, nameIdentity) => {
   try {
     await AsyncStorage.setItem(nameIdentity, JSON.stringify(authData));
-  } catch (error) {
-  }
+  } catch (error) {}
 };
 
 function sleep(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 const getToken = async (authIdentity) => {
@@ -54,8 +53,7 @@ const removeStoragePropFromObject = async (nameObject, propertie) => {
     const obj = await getToken(nameObject);
     delete obj[propertie];
     await storeToken(obj, nameObject);
-  } catch (error) {
-  }
+  } catch (error) {}
 };
 
 const currentDate = () => {
@@ -72,7 +70,7 @@ const currentDate = () => {
   return year + "-" + month + "-" + date;
 };
 
-const decodeJWT = chainToken => {
+const decodeJWT = (chainToken) => {
   const base64Url = chainToken.split(".")[1];
   if (!base64Url) {
     return "";
@@ -81,7 +79,7 @@ const decodeJWT = chainToken => {
   return decodedValue.data;
 };
 
-const decodeJWTFechaexp = chainToken => {
+const decodeJWTFechaexp = (chainToken) => {
   const base64Url = chainToken.split(".")[1];
   if (!base64Url) {
     return "";
@@ -89,7 +87,7 @@ const decodeJWTFechaexp = chainToken => {
   return JSON.parse(Base64.atob(base64Url));
 };
 
-const isNumeric = num => {
+const isNumeric = (num) => {
   return !isNaN(num);
 };
 
@@ -100,7 +98,7 @@ const validateCedula = (cedula) => {
   }
 
   // Extraer los primeros 9 dígitos y el dígito verificador
-  let digitos = cedula.split('').map(Number);
+  let digitos = cedula.split("").map(Number);
   let digitoVerificador = digitos.pop();
 
   // Validar tercer dígito (0-6)
@@ -112,7 +110,8 @@ const validateCedula = (cedula) => {
   let suma = 0;
   for (let i = 0; i < digitos.length; i++) {
     let num = digitos[i];
-    if (i % 2 === 0) { // Posición impar (pares en índice 0-based)
+    if (i % 2 === 0) {
+      // Posición impar (pares en índice 0-based)
       num *= 2;
       if (num > 9) num -= 9;
     }
@@ -123,7 +122,7 @@ const validateCedula = (cedula) => {
   let digitoCalculado = residuo === 0 ? 0 : 10 - residuo;
 
   return digitoCalculado === digitoVerificador;
-}
+};
 
 const validateRUC = (ruc) => {
   if (!/^\d{13}$/.test(ruc)) return false;
@@ -149,7 +148,7 @@ const validateRUC = (ruc) => {
 
 const validarSociedadPublica = (ruc) => {
   const coeficientes = [3, 2, 7, 6, 5, 4, 3, 2];
-  let digitos = ruc.slice(0, 8).split('').map(Number);
+  let digitos = ruc.slice(0, 8).split("").map(Number);
   let suma = digitos.reduce((acc, d, i) => acc + d * coeficientes[i], 0);
   let residuo = suma % 11;
   let digitoVerificador = residuo === 0 ? 0 : 11 - residuo;
@@ -158,7 +157,7 @@ const validarSociedadPublica = (ruc) => {
 
 const validarSociedadPrivada = (ruc) => {
   const coeficientes = [4, 3, 2, 7, 6, 5, 4, 3, 2];
-  let digitos = ruc.slice(0, 9).split('').map(Number);
+  let digitos = ruc.slice(0, 9).split("").map(Number);
   let suma = digitos.reduce((acc, d, i) => acc + d * coeficientes[i], 0);
   let residuo = suma % 11;
   let digitoVerificador = residuo === 0 ? 0 : 11 - residuo;
@@ -179,6 +178,27 @@ const validateIdentificacion = (input) => {
   return false;
 };
 
+function formatSecuencia(number, width) {
+  if (number === null) return "";
+  var numberOutput = Math.abs(number);
+  var length = numberOutput.toString().length;
+  var zero = "0";
+
+  if (width <= length) {
+    if (number < 0) {
+      return "-" + numberOutput.toString();
+    } else {
+      return numberOutput.toString();
+    }
+  } else {
+    if (number < 0) {
+      return "-" + zero.repeat(width - length) + numberOutput.toString();
+    } else {
+      return zero.repeat(width - length) + numberOutput.toString();
+    }
+  }
+}
+
 export {
   getToken,
   mergeStorage,
@@ -190,5 +210,6 @@ export {
   decodeJWT,
   decodeJWTFechaexp,
   isNumeric,
-  validateIdentificacion
+  validateIdentificacion,
+  formatSecuencia,
 };

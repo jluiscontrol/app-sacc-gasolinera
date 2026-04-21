@@ -46,9 +46,11 @@ import { showAlert } from "../components/CustomAlert";
 import { Colors } from "../utils/Colors";
 import CustomModalContainer from "../components/CustomModalContainer";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import PagoDeUnaComponent from "../components/PagoDeUnaComponent";
+import PagoPinPadComponent from "../components/PagoPinPadComponent";
 
 export default function HomeScreen() {
-  const isDesarrollo = false;
+  const isDesarrollo = true;
 
   const isDrawerOpen = useDrawerStatus() === "open";
   const showModal = useModalStore((state) => state.showModal);
@@ -89,6 +91,36 @@ export default function HomeScreen() {
   const [establecimientosContables, setEstablecimientosContables] = useState(
     [],
   );
+  const [isconfirmado, setisconfirmado] = useState(false);
+  const [isOpenModalPagarDeUna, setIsOpenModalPagarDeUna] = useState(false);
+  const [isOpenModalPagarPinPad, setIsOpenModalPagarPinPad] = useState(false);
+  const [codigomovil, setCodigomovil] = useState("");
+  const [isconfirmadoPinPad, setisconfirmadoPinPad] = useState(false);
+  const [estadodeuna, setEstadodeuna] = useState({
+    procesando: false,
+    escaneando: false,
+    confirmado: false,
+    enviado: true,
+    timeout: false,
+  });
+
+  const [estadoPinPad, setEstadoPinPad] = useState({
+    tipopago: true,
+    diferido: false,
+    meses: false,
+    procesando: false,
+    confirmado: false,
+  });
+  const [detallepagodeuna, setDetallepagodeuna] = useState({
+    tipopago_id: 0,
+    ct_banco: 0,
+    banco: "",
+    formapago: "",
+    numerodocumentobancario: "",
+    valorpago: "",
+    transactionId: "",
+    deuna_response: "",
+  });
   const estadosDispensador = {
     BLOQUEADO: ["Ii", "Iu", "Zi"],
     HABILITADO: ["Ai", "Aa", "Au"],
@@ -239,6 +271,127 @@ export default function HomeScreen() {
     setIsOpenModalAddCustomer(false);
   };
 
+  const openPagarDeunaModal = () => {
+    const fechaActual = new Date();
+    const codigoUnicoMovil = `${usuario.username.substring(0, 4)}${fechaActual.getTime()}`;
+
+    setCodigomovil(codigoUnicoMovil);
+    setEstadodeuna({
+      ...estadodeuna,
+      procesando: false,
+      escaneando: false,
+      confirmado: false,
+      enviado: true,
+      timeout: false,
+    });
+
+    sendFacturacion(true);
+  };
+
+  const closePagarDeunaModal = () => {
+    if (estadodeuna?.escaneando) {
+      showAlert({
+        title: "Información",
+        message:
+          "Estimado usuario, Tiene pendiente un escaneo de DeUna por lo que no puede cerrar esta ventana, debe cancelar la solicitud.",
+      });
+    } else {
+      setIsOpenModalPagarDeUna(false);
+    }
+  };
+
+  const openPagarPinPadModal = () => {
+    const fechaActual = new Date();
+    const codigoUnicoMovil = `${usuario.username.substring(0, 4)}${fechaActual.getTime()}`;
+
+    setCodigomovil(codigoUnicoMovil);
+    setEstadoPinPad({
+      ...estadoPinPad,
+      tipopago: true,
+      diferido: false,
+      meses: false,
+      procesando: false,
+      confirmado: false,
+    });
+    sendFacturacion(false, true);
+  };
+
+  const closePagarPinPadModal = () => {
+    setIsOpenModalPagarPinPad(false);
+  };
+
+  const confirmacionpagodeUna = async (
+    response,
+    selectedDatoAdicional,
+    listdetallepago,
+  ) => {
+    setDetallepagodeuna({
+      tipopago_id: tipoPago.find(
+        (x) => x.id === parametrizacion.pagoOmisionDeUna,
+      ).id,
+      ct_banco: bancos.find((x) => x.id === parametrizacion.bancoOmisionDeUna)
+        .id,
+      banco: bancos.find((x) => x.id === parametrizacion.bancoOmisionDeUna)
+        .name,
+      formapago: tipoPago.find((x) => x.id === parametrizacion.pagoOmisionDeUna)
+        .name,
+      numerodocumentobancario: response.transferNumber,
+      valorpago: response.amount,
+      transactionId: response.transactionId,
+      deuna_response: JSON.stringify(response),
+    });
+
+    setIsOpenModalPagarDeUna(false);
+    setisconfirmado(true);
+  };
+
+  const confirmacionpagoPinPad = async (
+    response,
+    selectedDatoAdicional,
+    listdetallepago,
+    valorTotal,
+    recargo,
+  ) => {
+    let bancoObj = bancos.find(
+      (x) => x.valoradicional === response.codigoAdquirente,
+    );
+
+    if (Object.keys(bancoObj).length === 0) {
+      bancoObj = bancos.find(
+        (x) =>
+          x.name.toLowerCase() ===
+          (response?.nombreAdquirente ?? "").trim().toLowerCase(),
+      );
+    }
+    const tarjetaObj = tarjetas.find(
+      (x) =>
+        x.name.toLowerCase() ===
+        (response?.aplicacionEMV ?? "").trim().toLowerCase(),
+    );
+
+    setDetallepagodeuna({
+      ...defaultDataPago,
+      formapago_id: tipoPago.find(
+        (x) => x.id === parametrizacion.pagoOmisionPinPad,
+      ).id,
+      formapago: tipoPago.find(
+        (x) => x.id === parametrizacionObj.pagoOmisionPinPad,
+      ).name,
+      banco_id: bancoObj?.id,
+      banco: bancoObj?.name,
+      pago: valorTotal,
+      recargo: recargo,
+      referenciavoucher: response.referencia,
+      voucher: response.lote,
+      tarjeta_id: tarjetaObj?.id,
+      tarjeta: tarjetaObj?.descripcion,
+      deuna_response: JSON.stringify(response),
+    });
+
+    setIsOpenModalPagarPinPad(false);
+    setisconfirmado(true);
+  };
+
   useFocusEffect(
     useCallback(() => {
       callDataInitial();
@@ -333,35 +486,24 @@ export default function HomeScreen() {
   useEffect(() => {
     async function getconexionTransactor() {
       const localstorage = await getToken("configuration");
-      if (
-        !conexionTransactor.conectado &&
-        parseInt(localstorage.configurationUser.establecimiento_id) > 0
-      ) {
-        const establecimientoObj = localstorage.establecimiento.find(
-          (x) =>
-            x.id ===
-            parseInt(localstorage.configurationUser.establecimiento_id),
-        );
-        const establecimientoSriObj = localstorage.establecimiento.find(
-          (x) =>
-            x.id ===
-            parseInt(localstorage.configurationUser.establecimiento_id),
-        );
-        setPuntoEmision(localstorage.configurationUser.p_emision_electronica);
-        setEstablecimientoSRI(establecimientoSriObj.numeroestablecimiento);
+      const estId =
+        parseInt(localstorage.establecimientoId ?? 0) > 0
+          ? localstorage.establecimientoId
+          : configUser.establecimiento_id;
+
+      if (!conexionTransactor.conectado && parseInt(estId) > 0) {
+        const establecimientoObj =
+          localstorage.parametrizacion.establecimientos.find(
+            (x) => x.id === parseInt(estId),
+          );
+
         const additional_services = JSON.parse(
           establecimientoObj?.additional_services ?? "{}",
         );
-        setNodeImpresion(
-          JSON.parse(additional_services?.api_impresiones_node ?? "{}"),
-        );
-        setNodeImpresion2(
-          JSON.parse(additional_services?.api_impresiones_node2 ?? "{}"),
-        );
-        setPortImpresion(localstorage.impresora);
         const conexion_transactor = JSON.parse(
           additional_services?.conexion_transactor ?? "{}",
         );
+
         const url = conexion_transactor?.url ?? "";
         let objConexion = {
           conectado_get: true,
@@ -378,6 +520,13 @@ export default function HomeScreen() {
 
     getconexionTransactor();
   }, [conexionTransactor.isConected]);
+
+  useEffect(() => {
+    if (isconfirmado) {
+      sendFacturacion();
+      setisconfirmado(false);
+    }
+  }, [isconfirmado]);
 
   useEffect(() => {
     const intervalFacturacion = setInterval(() => {
@@ -663,10 +812,46 @@ export default function HomeScreen() {
     const localstorage = await getToken("configuration");
     const estacionesLocalStorage = localstorage.listEstaciones;
     setToken(localstorage.encodetoken);
+
     setParametrizacion(localstorage.parametrizacion);
-    setEstablecimientoid(localstorage.configurationUser.establecimiento_id);
-    setBodegaId(localstorage.configurationUser.bodega_id);
-    setCajaId(localstorage.configurationUser.caja_id);
+    const configUser = localstorage.configurationUser;
+    const estId =
+      parseInt(localstorage.establecimientoId ?? 0) > 0
+        ? localstorage.establecimientoId
+        : configUser.establecimiento_id;
+
+    setEstablecimientoid(estId);
+    const establecimientoObj =
+      localstorage.parametrizacion.establecimientos.find(
+        (x) => x.id === parseInt(estId),
+      );
+    if (establecimientoObj) {
+      setEstablecimientoSRI(establecimientoObj.numeroestablecimiento);
+    }
+    setPuntoEmision(configUser.p_emision_electronica);
+
+    const additional_services = JSON.parse(
+      establecimientoObj?.additional_services ?? "{}",
+    );
+    setNodeImpresion(
+      JSON.parse(additional_services?.api_impresiones_node ?? "{}"),
+    );
+    setNodeImpresion2(
+      JSON.parse(additional_services?.api_impresiones_node2 ?? "{}"),
+    );
+    setPortImpresion(localstorage.impresora);
+
+    if (parseInt(localstorage.bodegaId ?? 0) > 0) {
+      setBodegaId(localstorage.bodegaId);
+    } else {
+      setBodegaId(localstorage.configurationUser.bodega_id);
+    }
+    if (parseInt(localstorage.cajaId ?? 0) > 0) {
+      setCajaId(localstorage.cajaId);
+    } else {
+      setCajaId(localstorage.configurationUser.caja_id);
+    }
+
     setUsuario(localstorage.userData);
     setTurnoActivo(localstorage.turnoActivo);
     setBancos(localstorage.bancos);
@@ -2572,7 +2757,7 @@ export default function HomeScreen() {
       });
   };
 
-  const sendFacturacion = () => {
+  const sendFacturacion = (isdeuna = false, isPinPad = false) => {
     if (sendingRef.current) return;
     sendingRef.current = true;
 
@@ -2624,12 +2809,22 @@ export default function HomeScreen() {
         return;
       }
 
-      saveFactura(selectedSurtidor.proforma, {
-        ...objSurtidor,
-        dolares: parseFloat(objTransactor[4]).toFixed(2),
-        galones: parseFloat(objTransactor[5]).toFixed(4),
-        transaccion_transactor: objTransactor.transaccion_transactor,
-      });
+      if (isdeuna) {
+        sendingRef.current = false;
+        setIsLoading(false);
+        setIsOpenModalPagarDeUna(true);
+      } else if (isPinPad) {
+        sendingRef.current = false;
+        setIsLoading(false);
+        setIsOpenModalPagarPinPad(true);
+      } else {
+        saveFactura(selectedSurtidor.proforma, {
+          ...objSurtidor,
+          dolares: parseFloat(objTransactor[4]).toFixed(2),
+          galones: parseFloat(objTransactor[5]).toFixed(4),
+          transaccion_transactor: objTransactor.transaccion_transactor,
+        });
+      }
     } catch (e) {
       setIsLoading(false);
       sendingRef.current = false;
@@ -2847,7 +3042,7 @@ export default function HomeScreen() {
         },
       ];
 
-      const detallepago = [
+      let detallepago = [
         {
           id: 0,
           tipopago_id: formapago_id,
@@ -2874,6 +3069,14 @@ export default function HomeScreen() {
           delete: false,
         },
       ];
+
+      if (isconfirmado) {
+        detallepago[0] = {
+          ...detallepago[0],
+          ...detallepagodeuna,
+        };
+        formapago_id = detallepagodeuna.tipopago_id;
+      }
 
       const tipopagoObj = tipoPago.find((x) => x.id === parseInt(formapago_id));
       const deshabilitaImpresion = Boolean(
@@ -2946,6 +3149,22 @@ export default function HomeScreen() {
           if (resp.data.status === 202) {
             setIsLoading(false);
             if (resp.data.id > 0) {
+              setisconfirmado(false);
+              setEstadodeuna({
+                ...estadodeuna,
+                procesando: false,
+                escaneando: false,
+                confirmado: false,
+                enviado: true,
+                timeout: false,
+              });
+              setEstadoPinPad({
+                ...estadoPinPad,
+                procesando: false,
+                confirmado: false,
+                enviado: true,
+                timeout: false,
+              });
               if (!isDesarrollo) {
                 desbloqueoSurtidor(objSurtidor.codigo_transactor.split(",")[0]);
               }
@@ -3282,6 +3501,8 @@ export default function HomeScreen() {
       } catch (error) {
         sendingRef.current = false;
         setIsLoading(false);
+        console.log(error);
+
         showAlert({
           title: "Información",
           message: "Hubo un problema al guardar la venta, intente nuevamente!",
@@ -3463,6 +3684,8 @@ export default function HomeScreen() {
         closeModal={closeModalDispensar}
         isloading={isloading}
         findEstadoSelectedSurtidor={findEstadoSelectedSurtidor}
+        openPagarDeunaModal={openPagarDeunaModal}
+        openPagarPinPadModal={openPagarPinPadModal}
       />
     );
   };
@@ -3545,6 +3768,78 @@ export default function HomeScreen() {
     );
   };
 
+  const renderModalPagarDeuna = () => {
+    return (
+      <PagoDeUnaComponent
+        valoresTotalesFactura={{
+          total: selectedSurtidor?.proforma
+            ? parseFloat(valores.dolares)
+            : parseFloat(valorDispensar.dolares),
+          propina: 0,
+        }}
+        periodofiscal={periodofiscal_id}
+        codigomovil={codigomovil}
+        headComprobante={objHeadBilling}
+        setFormHeadFields={setObjHeadBilling}
+        informacion={{
+          establecimientos: parametrizacion?.establecimientos,
+          cajas: parametrizacion?.cajas,
+        }}
+        parametrizacionObj={parametrizacion}
+        estado={estadodeuna}
+        setEstado={setEstadodeuna}
+        listSpendingPurchase={[]}
+        actions={{
+          confirmacionpago: confirmacionpagodeUna,
+          closepago: closePagarDeunaModal,
+        }}
+        establecimientoId={establecimientoid}
+        cajaId={cajaId}
+        bodegaId={bodegaId}
+        hiddenparcial={true}
+        menu={menuId}
+        config={config}
+      />
+    );
+  };
+
+  const renderModalPagarPinPad = () => {
+    return (
+      <PagoPinPadComponent
+        valoresTotalesFactura={{
+          total: selectedSurtidor?.proforma
+            ? parseFloat(valores.dolares)
+            : parseFloat(valorDispensar.dolares),
+          propina: 0,
+        }}
+        headComprobante={objHeadBilling}
+        setFormHeadFields={setObjHeadBilling}
+        periodofiscal={periodofiscal_id}
+        informacion={{
+          establecimientos: parametrizacion?.establecimientos,
+          cajas: parametrizacion?.cajas,
+        }}
+        parametrizacionObj={parametrizacion}
+        estado={estadoPinPad}
+        setEstado={setEstadoPinPad}
+        listSpendingPurchase={[]}
+        actions={{
+          confirmacionpago: confirmacionpagoPinPad,
+          closepago: closePagarPinPadModal,
+        }}
+        establecimientoId={establecimientoid}
+        cajaId={cajaId}
+        bodegaId={bodegaId}
+        hiddenparcial={true}
+        menu={menuId}
+        config={config}
+        establecimientoSRI={establecimientoSRI}
+        puntoEmision={puntoEmision}
+        vendedor_id={usuario.user_id}
+      />
+    );
+  };
+
   return (
     <>
       <Loader loading={isloading} />
@@ -3619,6 +3914,21 @@ export default function HomeScreen() {
         onClose={() => setIsOpenModalAcciones(false)}
       >
         {renderModalAcciones()}
+      </CustomModalContainer>
+
+      <CustomModalContainer
+        visible={isOpenModalPagarDeUna}
+        title={"Pagar con DeUna"}
+        onClose={closePagarDeunaModal}
+      >
+        {renderModalPagarDeuna()}
+      </CustomModalContainer>
+      <CustomModalContainer
+        visible={isOpenModalPagarPinPad}
+        title={"Pagar con PinPad"}
+        onClose={closePagarPinPadModal}
+      >
+        {renderModalPagarPinPad()}
       </CustomModalContainer>
       <CustomAppBar
         center={true}

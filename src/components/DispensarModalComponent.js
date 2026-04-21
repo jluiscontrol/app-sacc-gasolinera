@@ -9,14 +9,13 @@ import {
   Keyboard,
   TouchableWithoutFeedback,
   Pressable,
+  TouchableOpacity,
 } from "react-native";
 import React from "react";
 import CustomAppBar from "./CustomAppBar";
 import SearchCustomer from "./SearchCustomer";
 import CustomPicker from "./CustomPicker";
 import { Button, Chip, TextInput } from "react-native-paper";
-import PersonaSVG from "../../assets/images/misc/user.svg";
-import SettinsSVG from "../../assets/images/misc/settings.svg";
 import CustomCheckBox from "./CustomCheckBox";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import { sharedStyles } from "../styles/SharedStyles";
@@ -24,6 +23,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { showAlert } from "./CustomAlert";
 import { Colors } from "../utils/Colors";
 import CustomModalContainer from "./CustomModalContainer";
+import GlobalIcon from "./GlobalIcon";
+import { Image } from "expo-image";
 
 function DispensarModalComponent(props) {
   const insets = useSafeAreaInsets();
@@ -71,6 +72,8 @@ function DispensarModalComponent(props) {
     closeModal,
     isloading,
     findEstadoSelectedSurtidor,
+    openPagarDeunaModal,
+    openPagarPinPadModal,
   } = props;
 
   return (
@@ -212,7 +215,7 @@ function DispensarModalComponent(props) {
                     <Pressable
                       style={({ pressed }) => ({
                         padding: 5,
-                        opacity: pressed ? 0.5 : 1,
+                        transform: [{ scale: pressed ? 0.98 : 1 }],
                       })}
                       onPress={() => setSearchListModal(true)}
                     >
@@ -228,11 +231,16 @@ function DispensarModalComponent(props) {
                 <Pressable
                   style={({ pressed }) => ({
                     paddingHorizontal: 2,
-                    opacity: pressed ? 0.5 : 1,
+                    transform: [{ scale: pressed ? 0.98 : 1 }],
                   })}
                   onPress={() => setSearchPersonModal(true)}
                 >
-                  <PersonaSVG height={30} width={30} />
+                  <GlobalIcon
+                    family="material"
+                    name="person-search"
+                    size={30}
+                    color={Colors.primary}
+                  />
                 </Pressable>
               </View>
               {selectedSurtidor?.proforma &&
@@ -242,11 +250,16 @@ function DispensarModalComponent(props) {
                       style={({ pressed }) => ({
                         paddingHorizontal: 2,
                         justifyContent: "center",
-                        opacity: pressed ? 0.5 : 1,
+                        transform: [{ scale: pressed ? 0.98 : 1 }],
                       })}
                       onPress={() => openModalHabilitarDispensador()}
                     >
-                      <SettinsSVG height={30} width={30} />
+                      <GlobalIcon
+                        family="ion"
+                        name="settings-sharp"
+                        size={30}
+                        color={"#4a5059"}
+                      />
                     </Pressable>
                   </View>
                 )}
@@ -812,6 +825,58 @@ function DispensarModalComponent(props) {
                         </View>
                       </>
                     )}
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    {parametrizacion.habilitaPagosConDeUna &&
+                      objHeadBilling.tipoventa !== "CR" &&
+                      !objHeadBilling.autoconsumo && (
+                        <View style={styles.containerDeUna}>
+                          <Pressable
+                            onPress={openPagarDeunaModal}
+                            style={({ pressed }) => [
+                              styles.buttonDeUna,
+                              {
+                                opacity: pressed ? 0.8 : 1,
+                                transform: [{ scale: pressed ? 0.98 : 1 }],
+                              },
+                            ]}
+                          >
+                            <Image
+                              source={require("./../../assets/images/deuna.png")}
+                              style={styles.imageDeUna}
+                              contentFit="contain"
+                            />
+                          </Pressable>
+                        </View>
+                      )}
+                    {parametrizacion.habilitaPagosConPINPAD &&
+                      objHeadBilling.tipoventa !== "CR" &&
+                      !objHeadBilling.autoconsumo && (
+                        <View style={styles.containerDeUna}>
+                          <Pressable
+                            onPress={openPagarPinPadModal}
+                            style={({ pressed }) => [
+                              styles.buttonDeUna,
+                              {
+                                opacity: pressed ? 0.8 : 1,
+                                transform: [{ scale: pressed ? 0.98 : 1 }],
+                              },
+                            ]}
+                          >
+                            <Image
+                              source={require("./../../assets/images/datafast.png")}
+                              style={styles.imageDeUna}
+                              contentFit="contain"
+                            />
+                          </Pressable>
+                        </View>
+                      )}
+                  </View>
                 </>
               )}
           </View>
@@ -862,6 +927,23 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: "600",
     paddingVertical: 0,
+  },
+  containerDeUna: {
+    marginHorizontal: 16,
+    marginTop: 15,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  buttonDeUna: {
+    padding: 5,
+    backgroundColor: "#fff",
+    borderRadius: 15,
+  },
+  imageDeUna: {
+    width: 100,
+    height: 100,
+    borderRadius: 20,
+    overflow: "hidden",
   },
 });
 

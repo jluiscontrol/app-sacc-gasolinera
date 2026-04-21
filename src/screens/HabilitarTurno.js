@@ -145,15 +145,16 @@ export default function HabilitarTurno({ imprimir, status = "I", closeModal }) {
   useEffect(() => {
     async function getconexionTransactor() {
       const localstorage = await getToken("configuration");
-      if (
-        !conexionTransactor.conectado &&
-        parseInt(localstorage.configurationUser.establecimiento_id) > 0
-      ) {
-        const establecimientoObj = localstorage.establecimiento.find(
-          (x) =>
-            x.id ===
-            parseInt(localstorage.configurationUser.establecimiento_id),
-        );
+      const estId =
+        parseInt(localstorage.establecimientoId ?? 0) > 0
+          ? localstorage.establecimientoId
+          : configUser.establecimiento_id;
+      if (!conexionTransactor.conectado && parseInt(estId) > 0) {
+        const establecimientoObj =
+          localstorage.parametrizacion.establecimientos.find(
+            (x) => x.id === parseInt(estId),
+          );
+
         const additional_services = JSON.parse(
           establecimientoObj?.additional_services ?? "{}",
         );

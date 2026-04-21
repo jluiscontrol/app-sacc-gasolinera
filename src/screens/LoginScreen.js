@@ -137,29 +137,18 @@ export default function LoginScreen() {
         `api/v1/general/datos/maestros/configuracion/usuario/${periodofiscal}`,
       );
       if (resp.data.status === 200) {
+        const {
+          items: configurationUser,
+          porcentajeImpuesto: porcentajeIVA,
+          ...resto
+        } = resp.data;
+
         mergeStorage(
           {
-            configurationUser: resp.data.items,
-            porcentajeIVA: resp.data.porcentajeImpuesto,
-            parametrizacion: resp.data.parametrizacion,
-            contribuyente: resp.data.contribuyente,
-            turnoActivo: resp.data.turnoActivo,
-            surtidores: resp.data.surtidores,
-            establecimiento: resp.data.establecimiento,
-            estaciones: resp.data.estaciones,
-            impresora: resp.data.impresora,
-            menuId: resp.data.menuId,
+            configurationUser,
+            porcentajeIVA,
             periodofiscal_id: periodofiscal,
-            tipoPago: resp.data.tipoPago,
-            bancos: resp.data.bancos,
-            tarjetas: resp.data.tarjetas,
-            tipo_identificacion: resp.data.tipo_identificacion,
-            estados_civil: resp.data.estados_civil,
-            sexos: resp.data.sexos,
-            establecimientoContable: resp.data.establecimientoContable,
-            defaultEstado: resp.data.defaultEstado,
-            defaultCiudad: resp.data.defaultCiudad,
-            defaultPais: resp.data.defaultPais,
+            ...resto,
           },
           "configuration",
         );

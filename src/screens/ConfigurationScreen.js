@@ -1,4 +1,11 @@
-import { View, Text, StyleSheet, Pressable, FlatList } from "react-native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  Pressable,
+  FlatList,
+  ScrollView,
+} from "react-native";
 import { useEffect, useState } from "react";
 import { useNavigation } from "@react-navigation/native";
 import useAuthStore from "../stores/AuthStore";
@@ -31,6 +38,15 @@ export default function ConfigurationScreen() {
   const [idPeriodoSelect, setIdPeriodoSelect] = useState(0);
   const [datosEstaciones, setdatosEstaciones] = useState([]);
   const [selectedEstaciones, setSelectedEstaciones] = useState([]);
+  const [parametrizacionObj, setParametrizacion] = useState({});
+
+  const [modalEstablecimientos, setModalEstablecimientos] = useState(false);
+  const [modalBodegas, setModalBodegas] = useState(false);
+  const [modalCajas, setModalCajas] = useState(false);
+
+  const [establecimientoId, setEstablecimientoId] = useState(0);
+  const [bodegaId, setBodegaId] = useState(0);
+  const [cajaId, setCajaId] = useState(0);
 
   useEffect(() => {
     callDataInitial();
@@ -42,10 +58,28 @@ export default function ConfigurationScreen() {
     if (localstorage && "periodofiscal_id" in localstorage) {
       setIdPeriodoSelect(localstorage.periodofiscal_id);
       setRespIdPeriodoSelect(localstorage.periodofiscal_id);
+      setParametrizacion(localstorage.parametrizacion);
+
       setIsLoading(true);
       refreshParametrizacionApp(localstorage.periodofiscal_id);
       if ("listEstaciones" in localstorage) {
         setSelectedEstaciones(localstorage.listEstaciones);
+      }
+
+      if (parseInt(localstorage.establecimientoId ?? 0) > 0) {
+        setEstablecimientoId(localstorage.establecimientoId);
+      } else {
+        setEstablecimientoId(localstorage.configurationUser.establecimiento_id);
+      }
+      if (parseInt(localstorage.bodegaId ?? 0) > 0) {
+        setBodegaId(localstorage.bodegaId);
+      } else {
+        setBodegaId(localstorage.configurationUser.bodega_id);
+      }
+      if (parseInt(localstorage.cajaId ?? 0) > 0) {
+        setCajaId(localstorage.cajaId);
+      } else {
+        setCajaId(localstorage.configurationUser.caja_id);
       }
     }
     if (localstorage && "data" in localstorage) {
@@ -93,6 +127,36 @@ export default function ConfigurationScreen() {
     }
   };
 
+  const saveEstablecimientos = async () => {
+    mergeStorage(
+      {
+        establecimientoId: establecimientoId,
+      },
+      "configuration",
+    );
+    setModalEstablecimientos(false);
+    showAlert({
+      title: "INFORMACIÓN",
+      message: "Se han guardado los establecimientos satisfactoriamente",
+    });
+  };
+
+  const saveBodegasAndCajas = () => {
+    mergeStorage(
+      {
+        bodegaId: bodegaId,
+        cajaId: cajaId,
+      },
+      "configuration",
+    );
+    setModalBodegas(false);
+    setModalCajas(false);
+    showAlert({
+      title: "INFORMACIÓN",
+      message: "Se han guardado satisfactoriamente",
+    });
+  };
+
   const saveSelectedEstaciones = () => {
     if (selectedEstaciones.length === 0) {
       showAlert({
@@ -124,6 +188,12 @@ export default function ConfigurationScreen() {
           `api/v1/general/datos/maestros/configuracion/usuario/${periodoFiscal}`,
         );
         if (resp.data.status === 200) {
+          const {
+            items: configurationUser,
+            porcentajeImpuesto: porcentajeIVA,
+            estaciones,
+            ...resto
+          } = resp.data;
           const uniqueStations = new Map();
 
           resp.data.estaciones.forEach((item) => {
@@ -136,26 +206,11 @@ export default function ConfigurationScreen() {
           const data = Array.from(uniqueStations.values());
           mergeStorage(
             {
-              configurationUser: resp.data.items,
-              porcentajeIVA: resp.data.porcentajeImpuesto,
-              parametrizacion: resp.data.parametrizacion,
-              turnoActivo: resp.data.turnoActivo,
-              surtidores: resp.data.surtidores,
-              data: data,
-              establecimiento: resp.data.establecimiento,
-              estaciones: resp.data.estaciones,
-              impresora: resp.data.impresora,
-              menuId: resp.data.menuId,
-              tipoPago: resp.data.tipoPago,
-              bancos: resp.data.bancos,
-              tarjetas: resp.data.tarjetas,
-              tipo_identificacion: resp.data.tipo_identificacion,
-              estados_civil: resp.data.estados_civil,
-              sexos: resp.data.sexos,
-              establecimientoContable: resp.data.establecimientoContable,
-              defaultEstado: resp.data.defaultEstado,
-              defaultCiudad: resp.data.defaultCiudad,
-              defaultPais: resp.data.defaultPais,
+              configurationUser,
+              porcentajeIVA,
+              estaciones,
+              data,
+              ...resto,
             },
             "configuration",
           );
@@ -199,9 +254,25 @@ export default function ConfigurationScreen() {
       onPress: () => setModalPeriodo(true),
     },
     {
-      icon: { family: "material", name: "apartment" },
-      text: "Configurar Estaciones",
+      icon: { family: "materialC", name: "gas-station" },
+      text: "Estaciones",
       onPress: () => setModalEstaciones(true),
+    },
+
+    {
+      icon: { family: "material", name: "apartment" },
+      text: "Establecimientos",
+      onPress: () => setModalEstablecimientos(true),
+    },
+    {
+      icon: { family: "materialC", name: "warehouse" },
+      text: "Bodega",
+      onPress: () => setModalBodegas(true),
+    },
+    {
+      icon: { family: "materialC", name: "cash-register" },
+      text: "Caja",
+      onPress: () => setModalCajas(true),
     },
     {
       icon: { family: "ion", name: "log-out" },
@@ -275,6 +346,114 @@ export default function ConfigurationScreen() {
           </Button>
         </View>
       </>
+    );
+  };
+
+  const renderModalEstablecimientosPersonalizados = () => {
+    return (
+      <>
+        {false ? (
+          <View
+            style={{
+              alignItems: "center",
+            }}
+          >
+            <View
+              style={{
+                backgroundColor: "white",
+                padding: 20,
+                borderRadius: 10,
+              }}
+            >
+              <Text style={{ color: "red", fontWeight: "700" }}>
+                NO ESTÁ ACTIVADA LA PARAMETRIZACIÓN
+              </Text>
+            </View>
+          </View>
+        ) : (
+          <View>
+            <ScrollView>
+              <View style={styles.sectionBox}>
+                {(parametrizacionObj.establecimientos || []).map(
+                  (item, index) => (
+                    <CustomCheckBox
+                      key={index}
+                      checked={item.id == establecimientoId}
+                      onPress={() => setEstablecimientoId(item.id)}
+                      title={item.nombre}
+                    />
+                  ),
+                )}
+              </View>
+            </ScrollView>
+            <View>
+              <Button
+                buttonColor={Colors.primary}
+                mode="contained"
+                onPress={() => saveEstablecimientos()}
+              >
+                Guardar Configuración
+              </Button>
+            </View>
+          </View>
+        )}
+      </>
+    );
+  };
+
+  const renderModalBodegas = () => {
+    return (
+      <View>
+        <ScrollView>
+          <View style={styles.sectionBox}>
+            {(parametrizacionObj.bodegas || []).map((item, index) => (
+              <CustomCheckBox
+                key={index}
+                checked={item.id == bodegaId}
+                onPress={() => setBodegaId(item.id)}
+                title={item.nombre}
+              />
+            ))}
+          </View>
+        </ScrollView>
+        <View>
+          <Button
+            buttonColor={Colors.primary}
+            mode="contained"
+            onPress={() => saveBodegasAndCajas()}
+          >
+            Guardar Configuración
+          </Button>
+        </View>
+      </View>
+    );
+  };
+
+  const renderModalCajas = () => {
+    return (
+      <View>
+        <ScrollView>
+          <View style={styles.sectionBox}>
+            {(parametrizacionObj.cajas || []).map((item, index) => (
+              <CustomCheckBox
+                key={index}
+                checked={item.id == cajaId}
+                onPress={() => setCajaId(item.id)}
+                title={item.nombre}
+              />
+            ))}
+          </View>
+        </ScrollView>
+        <View>
+          <Button
+            buttonColor={Colors.primary}
+            mode="contained"
+            onPress={() => saveBodegasAndCajas()}
+          >
+            Guardar Configuración
+          </Button>
+        </View>
+      </View>
     );
   };
 
@@ -353,6 +532,30 @@ export default function ConfigurationScreen() {
         onClose={() => setModalEstaciones(false)}
       >
         {renderModalEstacion()}
+      </CustomModalContainer>
+
+      <CustomModalContainer
+        visible={modalEstablecimientos}
+        title={"Establecimientos"}
+        onClose={() => setModalEstablecimientos(false)}
+      >
+        {renderModalEstablecimientosPersonalizados()}
+      </CustomModalContainer>
+
+      <CustomModalContainer
+        visible={modalBodegas}
+        title={"Bodegas"}
+        onClose={() => setModalBodegas(false)}
+      >
+        {renderModalBodegas()}
+      </CustomModalContainer>
+
+      <CustomModalContainer
+        visible={modalCajas}
+        title={"Cajas"}
+        onClose={() => setModalCajas(false)}
+      >
+        {renderModalCajas()}
       </CustomModalContainer>
 
       <CustomAppBar

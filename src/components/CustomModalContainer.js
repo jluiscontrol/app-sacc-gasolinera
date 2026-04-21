@@ -56,6 +56,13 @@ export default function CustomModalContainer({
       hideSub.remove();
     };
   }, []);
+
+  const handleClose = useCallback(() => {
+    if (onClose) {
+      onClose();
+    }
+  }, [onClose]);
+
   useEffect(() => {
     if (visible) {
       setInternalVisible(true);
@@ -67,34 +74,23 @@ export default function CustomModalContainer({
       translateY.value = withTiming(
         screenHeight,
         {
-          duration: 280,
+          duration: 300,
           easing: Easing.in(Easing.ease),
         },
-        () => {
-          runOnJS(setInternalVisible)(false);
+        (finished) => {
+          if (finished) {
+            runOnJS(setInternalVisible)(false);
+          }
         },
       );
     }
-  }, [visible]);
-
-  const handleClose = useCallback(() => {
-    translateY.value = withTiming(
-      screenHeight,
-      {
-        duration: 280,
-        easing: Easing.in(Easing.ease),
-      },
-      () => {
-        runOnJS(setInternalVisible)(false);
-        runOnJS(onClose)();
-      },
-    );
-  }, [onClose]);
+  }, [visible, screenHeight]);
 
   const animatedSheetStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: translateY.value - keyboardOffset.value }],
   }));
-  if (!internalVisible) return null;
+
+  if (!internalVisible && !visible) return null;
 
   return (
     <Modal
@@ -102,7 +98,7 @@ export default function CustomModalContainer({
       statusBarTranslucent
       navigationBarTranslucent
       animationType="fade"
-      visible={true}
+      visible={internalVisible}
     >
       <TouchableWithoutFeedback onPress={handleClose}>
         <View style={styles.backdrop} />

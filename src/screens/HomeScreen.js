@@ -1298,7 +1298,7 @@ export default function HomeScreen() {
               ? JSON.parse(cliente.placas)
               : [];
             const objPlaca = placasCliente.find(
-              (x) => x.placa.toUpperCase() === placa.toUpperCase(),
+              (x) => (x.placa ?? "").toUpperCase() === (placa ?? "").toUpperCase(),
             );
             let placaHabilitadaCredito = false;
 
@@ -1420,7 +1420,7 @@ export default function HomeScreen() {
         setIsLoading(false);
         showAlert({
           title: "Error",
-          message: "Error al consultar la proforma del surtidor.",
+          message: `Error al consultar la proforma del surtidor. \n${error}`,
         });
       }
     }

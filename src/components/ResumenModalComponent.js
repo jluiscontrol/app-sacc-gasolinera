@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import CustomAppBar from "./CustomAppBar";
 import {
   FlatList,
@@ -8,146 +8,115 @@ import {
   Text,
   View,
 } from "react-native";
-import { Card } from "react-native-paper";
 import { TextInput } from "react-native-paper";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import { SkypeIndicator } from "react-native-indicators";
 import { sharedStyles } from "../styles/SharedStyles";
 import { Colors } from "../utils/Colors";
 
+const TABS = [
+  { key: "Tab1", label: "Depósitos", field: "egresos" },
+  { key: "Tab2", label: "Facturas", field: "facturas" },
+  { key: "Tab3", label: "Tickets", field: "tickets" },
+  { key: "Tab4", label: "N. Entrega", field: "ordenesventas" },
+];
+
 export default function ResumenModalComponent(props) {
-  const { dataResumen, printerDeposito, printDocument, closeModal } = props;
+  const { dataResumen, printerDeposito, printDocument, closeModal, loading } =
+    props;
   const [searchText, setSearchText] = useState("");
   const [selectedTab, setSelectedTab] = useState("Tab2");
 
-  const filterData = (data, type) => {
-    return (
-      data?.filter((item) => {
-        if (type === "egresos") {
-          return (
-            item.id.toString().includes(searchText) ||
-            item.comentario?.toLowerCase().includes(searchText.toLowerCase())
-          );
-        } else {
-          return (
-            item.id.toString().includes(searchText) ||
-            item.cliente?.toLowerCase().includes(searchText.toLowerCase()) ||
-            item.placa?.toLowerCase().includes(searchText.toLowerCase()) ||
-            item.valor?.toString().includes(searchText)
-          );
-        }
-      }) ?? []
-    );
-  };
+  const activeTab = TABS.find((tab) => tab.key === selectedTab) ?? TABS[1];
 
-  const renderItem = (item, index, type, filteredData) => {
-    const isFirst = index === 0;
-    const isLast = index === filteredData?.length - 1;
+  const filteredData = useMemo(() => {
+    const source = dataResumen?.[activeTab.field] ?? [];
+    const query = searchText.trim().toLowerCase();
+    if (!query) {
+      return source;
+    }
+    return source.filter((item) => {
+      if (activeTab.field === "egresos") {
+        return (
+          String(item.id).includes(query) ||
+          (item.comentario ?? "").toLowerCase().includes(query)
+        );
+      }
+      return (
+        String(item.id).includes(query) ||
+        (item.cliente ?? "").toLowerCase().includes(query) ||
+        (item.placa ?? "").toLowerCase().includes(query) ||
+        String(item.valor ?? item.total ?? "").includes(query)
+      );
+    });
+  }, [activeTab.field, dataResumen, searchText]);
+
+  const totalTab = useMemo(
+    () =>
+      filteredData.reduce(
+        (sum, item) => sum + parseFloat(item.valor ?? item.total ?? 0),
+        0,
+      ),
+    [filteredData],
+  );
+
+  const renderItem = ({ item, index }) => {
+    const isEgreso = activeTab.field === "egresos";
+    const valor = parseFloat(item.valor ?? item.total ?? 0);
+
     return (
-      <Card
-        key={index}
-        style={[
-          styles.card,
-          {
-            borderTopLeftRadius: isFirst ? 15 : 5,
-            borderTopRightRadius: isFirst ? 15 : 5,
-            borderBottomLeftRadius: isLast ? 15 : 5,
-            borderBottomRightRadius: isLast ? 15 : 5,
-          },
-        ]}
-      >
-        <Card.Content>
+      <View style={styles.card}>
+        <View style={styles.cardHeader}>
+          <View style={styles.cardHeaderLeft}>
+            <Text style={styles.cardId}>#{item.id}</Text>
+            <Text style={styles.cardHour}>{item.hora ?? "--:--"}</Text>
+          </View>
           <Pressable
             style={({ pressed }) => [
-              styles.botonImpresion,
+              styles.printButton,
               pressed && sharedStyles.pressed,
             ]}
             onPress={() => {
-              if (type === "egresos") {
+              if (isEgreso) {
                 printerDeposito(item.id);
               } else {
                 printDocument(item.id, item.tipo_documento, item.estacion_id);
               }
             }}
           >
-            <Ionicons name="print" color={"grey"} size={30} />
+            <Ionicons name="print-outline" color={Colors.primary} size={22} />
           </Pressable>
-          <View style={{ display: "flex", flexDirection: "row" }}>
-            <Text>Transferencia: {item.id}</Text>
-            <View style={{ width: 30 }} />
-            <Text>Hora: {item.hora}</Text>
-          </View>
-          {type !== "egresos" && <Text>Cliente: {item.cliente}</Text>}
-          {type !== "egresos" && (
-            <View
-              style={{
-                display: "flex",
-                flexDirection: "row",
-                justifyContent: "space-between",
-              }}
-            >
-              <Text>Placa: {item.placa}</Text>
-              <Text style={{ fontWeight: "bold" }}>
-                ${item.valor ?? item.total}
-              </Text>
-            </View>
-          )}
-          {item.comentario && <Text>Comentario: {item.comentario}</Text>}
-          {type === "egresos" && (
-            <Text style={{ textAlign: "right", fontWeight: "bold" }}>
-              ${item.valor ?? item.total}
+        </View>
+
+        {!isEgreso && (
+          <>
+            <Text style={styles.cardClient} numberOfLines={1}>
+              {item.cliente ?? "Sin cliente"}
             </Text>
-          )}
-        </Card.Content>
-      </Card>
-    );
-  };
+            <View style={styles.cardFooter}>
+              <Text style={styles.cardPlaca}>{item.placa ?? "—"}</Text>
+              <Text style={styles.cardAmount}>${valor.toFixed(2)}</Text>
+            </View>
+          </>
+        )}
 
-  const renderContent = () => {
-    let filteredData;
-    let dataType;
+        {isEgreso && item.comentario ? (
+          <Text style={styles.cardComment} numberOfLines={2}>
+            {item.comentario}
+          </Text>
+        ) : null}
 
-    switch (selectedTab) {
-      case "Tab1":
-        filteredData = filterData(dataResumen?.egresos, "egresos");
-        dataType = "egresos";
-        break;
-      case "Tab2":
-        filteredData = filterData(dataResumen?.facturas, "facturas");
-        dataType = "facturas";
-        break;
-      case "Tab3":
-        filteredData = filterData(dataResumen?.tickets, "tickets");
-        dataType = "tickets";
-        break;
-      case "Tab4":
-        filteredData = filterData(dataResumen?.ordenesventas, "ordenesventas");
-        dataType = "ordenesventas";
-        break;
-      default:
-        return null;
-    }
-
-    return (
-      <FlatList
-        data={filteredData}
-        keyExtractor={(item, index) => index.toString()}
-        renderItem={({ item, index }) =>
-          renderItem(item, index, dataType, filteredData)
-        }
-      />
+        {isEgreso && (
+          <Text style={[styles.cardAmount, styles.cardAmountRight]}>
+            ${valor.toFixed(2)}
+          </Text>
+        )}
+      </View>
     );
   };
 
   return (
-    <View style={{ flex: 1 }}>
-      {dataResumen.length === 0 && (
-        <View style={styles.loadingModal}>
-          <View style={styles.loadingContainer}>
-            <SkypeIndicator color={Colors.primary} size={60} />
-          </View>
-        </View>
-      )}
+    <View style={styles.screen}>
       <CustomAppBar
         bold
         center={true}
@@ -155,141 +124,257 @@ export default function ResumenModalComponent(props) {
         onRightPress={closeModal}
         title={"Resumen transacciones"}
       />
-      <View style={{ height: 48 }}>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{ paddingHorizontal: 10 }}
-          style={{ height: 48 }}
-        >
-          <View style={styles.tabContainer}>
-            {[
-              { key: "Tab1", label: "Depositos" },
-              { key: "Tab2", label: "Facturas" },
-              { key: "Tab3", label: "Ticket de Ventas" },
-              { key: "Tab4", label: "N. Entrega" },
-            ].map((tab) => (
-              <Pressable
-                key={tab.key}
-                style={({ pressed }) => [
-                  styles.tab,
-                  selectedTab === tab.key && styles.activeTab,
-                  pressed && sharedStyles.pressed,
-                ]}
-                onPress={() => setSelectedTab(tab.key)}
-              >
+
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.tabsScroll}
+        style={styles.tabsBar}
+      >
+        {TABS.map((tab) => {
+          const count = dataResumen?.[tab.field]?.length ?? 0;
+          const active = selectedTab === tab.key;
+          return (
+            <Pressable
+              key={tab.key}
+              style={({ pressed }) => [
+                styles.tab,
+                active && styles.tabActive,
+                pressed && sharedStyles.pressed,
+              ]}
+              onPress={() => setSelectedTab(tab.key)}
+            >
+              <Text style={[styles.tabText, active && styles.tabTextActive]}>
+                {tab.label}
+              </Text>
+              <View style={[styles.tabBadge, active && styles.tabBadgeActive]}>
                 <Text
                   style={[
-                    styles.tabText,
-                    selectedTab === tab.key && styles.activeTabText,
+                    styles.tabBadgeText,
+                    active && styles.tabBadgeTextActive,
                   ]}
                 >
-                  {tab.label}
+                  {count}
                 </Text>
-              </Pressable>
-            ))}
-          </View>
-        </ScrollView>
+              </View>
+            </Pressable>
+          );
+        })}
+      </ScrollView>
+
+      <View style={styles.summaryBar}>
+        <Text style={styles.summaryLabel}>
+          {activeTab.label}: {filteredData.length} registro
+          {filteredData.length === 1 ? "" : "s"}
+        </Text>
+        <Text style={styles.summaryTotal}>${totalTab.toFixed(2)}</Text>
       </View>
-      <View style={styles.container}>
-        <TextInput
-          style={styles.searchInput}
-          placeholder="Buscar..."
-          value={searchText}
-          onChangeText={setSearchText}
-        />
-        <View style={styles.contentContainer}>{renderContent()}</View>
+
+      <TextInput
+        style={styles.searchInput}
+        placeholder="Buscar por ID, cliente, placa..."
+        value={searchText}
+        onChangeText={setSearchText}
+        mode="outlined"
+        dense
+        left={<TextInput.Icon icon="magnify" />}
+      />
+
+      <View style={styles.listWrap}>
+        {loading ? (
+          <View style={styles.centerState}>
+            <SkypeIndicator color={Colors.primary} size={50} />
+            <Text style={styles.stateText}>Cargando transacciones...</Text>
+          </View>
+        ) : filteredData.length === 0 ? (
+          <View style={styles.centerState}>
+            <Ionicons name="document-text-outline" size={48} color="#94a3b8" />
+            <Text style={styles.stateText}>No hay registros en esta pestaña</Text>
+          </View>
+        ) : (
+          <FlatList
+            data={filteredData}
+            keyExtractor={(item, index) => `${item.id}-${index}`}
+            renderItem={renderItem}
+            contentContainerStyle={styles.listContent}
+            showsVerticalScrollIndicator={false}
+          />
+        )}
       </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  tabContainer: {
-    flexDirection: "row",
+  screen: {
+    flex: 1,
+    backgroundColor: "#eef1f4",
+  },
+  tabsBar: {
+    maxHeight: 52,
+    marginTop: 4,
+  },
+  tabsScroll: {
+    paddingHorizontal: 10,
     gap: 8,
     alignItems: "center",
-    backgroundColor: "#f0f0f0",
-    borderRadius: 20,
   },
   tab: {
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 20,
-    backgroundColor: "#f0f0f0",
+    flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
-    height: 40,
-    marginRight: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 20,
+    backgroundColor: "#fff",
+    borderWidth: 1,
+    borderColor: "#e2e8f0",
+    gap: 6,
   },
-  activeTab: {
-    backgroundColor: "#ed9800",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
+  tabActive: {
+    backgroundColor: Colors.primary,
+    borderColor: Colors.primary,
   },
   tabText: {
-    fontSize: 16,
-    fontWeight: "500",
-    color: "#333",
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#334155",
   },
-  activeTabText: {
-    color: "#FFF",
+  tabTextActive: {
+    color: "#fff",
   },
-  card: {
-    elevation: 0,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0,
-    marginTop: 7,
-    marginHorizontal: 10,
-    backgroundColor: "white",
-    borderRadius: 10,
+  tabBadge: {
+    minWidth: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: "#f1f5f9",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 6,
   },
-  contentContainer: {
-    flex: 1,
-    backgroundColor: "#F2F2F2",
+  tabBadgeActive: {
+    backgroundColor: "rgba(255,255,255,0.25)",
   },
-  container: {
-    flex: 1,
+  tabBadgeText: {
+    fontSize: 11,
+    fontWeight: "700",
+    color: "#64748b",
   },
-  row: {
+  tabBadgeTextActive: {
+    color: "#fff",
+  },
+  summaryBar: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginBottom: 10,
-  },
-  botonImpresion: {
-    position: "absolute",
-    zIndex: 100,
-    right: 10,
-    top: 10,
-  },
-  loadingModal: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#00000080",
-    zIndex: 9999,
-  },
-  loadingContainer: {
-    height: 100,
-    width: 100,
+    marginHorizontal: 10,
+    marginTop: 8,
+    marginBottom: 4,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
     borderRadius: 10,
-    backgroundColor: "white",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-around",
+    backgroundColor: "#fff",
+    borderWidth: 1,
+    borderColor: "#e2e8f0",
+  },
+  summaryLabel: {
+    fontSize: 13,
+    color: "#64748b",
+    fontWeight: "600",
+  },
+  summaryTotal: {
+    fontSize: 16,
+    fontWeight: "800",
+    color: Colors.primary,
   },
   searchInput: {
     marginHorizontal: 10,
-    marginVertical: 5,
-    borderRadius: 8,
-    backgroundColor: "#FFF",
+    marginBottom: 6,
+    backgroundColor: "#fff",
+  },
+  listWrap: {
+    flex: 1,
+  },
+  listContent: {
+    paddingHorizontal: 10,
+    paddingBottom: 16,
+  },
+  card: {
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 8,
     borderWidth: 1,
-    borderColor: "#DDD",
+    borderColor: "#e2e8f0",
+  },
+  cardHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 6,
+  },
+  cardHeaderLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  cardId: {
+    fontSize: 14,
+    fontWeight: "800",
+    color: "#1e293b",
+  },
+  cardHour: {
+    fontSize: 12,
+    color: "#64748b",
+  },
+  printButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "#fff7ed",
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: "#fed7aa",
+  },
+  cardClient: {
+    fontSize: 14,
+    color: "#334155",
+    marginBottom: 4,
+  },
+  cardFooter: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  cardPlaca: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#64748b",
+  },
+  cardAmount: {
+    fontSize: 16,
+    fontWeight: "800",
+    color: "#0f766e",
+  },
+  cardAmountRight: {
+    textAlign: "right",
+    marginTop: 4,
+  },
+  cardComment: {
+    fontSize: 13,
+    color: "#64748b",
+    marginBottom: 4,
+  },
+  centerState: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 24,
+    gap: 10,
+  },
+  stateText: {
+    fontSize: 14,
+    color: "#64748b",
+    textAlign: "center",
   },
 });

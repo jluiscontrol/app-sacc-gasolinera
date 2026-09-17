@@ -48,6 +48,43 @@ import PagoPinPadComponent from "../components/PagoPinPadComponent";
 import SurtidorEstacionCard from "../components/SurtidorEstacionCard";
 import { useGasolineraComandos } from "../hooks/useGasolineraComandos";
 
+function getSaldoAnticipo(pagosanticipados, facturasAnticipadasAnticipo) {
+  if (facturasAnticipadasAnticipo) {
+    return parseFloat(pagosanticipados ?? 0) || 0;
+  }
+  if (Array.isArray(pagosanticipados)) {
+    return pagosanticipados.reduce(
+      (sum, item) => sum + (parseFloat(item?.total ?? 0) || 0),
+      0,
+    );
+  }
+  return 0;
+}
+
+function resolvePagoAnticipadoCliente({
+  pagoanticipado = false,
+  pagosanticipados = null,
+  facturasAnticipadasAnticipo = false,
+  permitirOrdenVenta = false,
+  placaHabilitadaCredito = true,
+}) {
+  if (permitirOrdenVenta || !placaHabilitadaCredito) {
+    return { defaultPagoanticipado: false, valorAnticipo: 0 };
+  }
+  const saldo = getSaldoAnticipo(pagosanticipados, facturasAnticipadasAnticipo);
+  if (facturasAnticipadasAnticipo) {
+    const tieneSaldo = saldo > 0;
+    return {
+      defaultPagoanticipado: Boolean(pagoanticipado) || tieneSaldo,
+      valorAnticipo: tieneSaldo ? saldo : 0,
+    };
+  }
+  return {
+    defaultPagoanticipado: Boolean(pagoanticipado),
+    valorAnticipo: 0,
+  };
+}
+
 export default function HomeScreen() {
   const {
     isDevBuild,
@@ -69,7 +106,8 @@ export default function HomeScreen() {
   const [isloading, setIsLoading] = useState(false);
   const [porcentajeIVA, setPorcentajeIVA] = useState(0);
   const logout = useAuthStore((ste) => ste.logout);
-  const [dataResumen, setDataResumen] = useState([]);
+  const [dataResumen, setDataResumen] = useState(null);
+  const [resumenLoading, setResumenLoading] = useState(false);
   const [estaciones, setEstaciones] = useState([]);
   const [refreshData, setRefreshData] = useState(false);
   const [token, setToken] = useState("");
@@ -949,7 +987,7 @@ export default function HomeScreen() {
       setIsOpenCierreTurno(true);
     } else {
       showAlert({
-        title: "Informacion!",
+        title: "Información",
         message:
           "Dispensadores sin facturar, verifique que todos los dispensadores esten liberados!",
       });
@@ -958,6 +996,8 @@ export default function HomeScreen() {
 
   const openModalResumenDespacho = async () => {
     setSearchResumenModal(true);
+    setResumenLoading(true);
+    setDataResumen(null);
     try {
       const res = await instance.get(
         `api/v1/gasolinera/resumen/despacho/turno/${periodofiscal_id}/${currentDate()}/${usuario.user_id
@@ -971,6 +1011,8 @@ export default function HomeScreen() {
         title: "Información",
         message: "Error",
       });
+    } finally {
+      setResumenLoading(false);
     }
   };
 
@@ -1422,14 +1464,26 @@ export default function HomeScreen() {
               permitir_orden_venta:
                 placaHabilitadaCredito && cliente.permitir_orden_venta,
               pruebatecnica,
-              pagoanticipado:
-                placaHabilitadaCredito && cliente.pagoanticipado
-                  ? cliente.pagoanticipado
-                  : false,
-              arrPagosanticipados:
-                placaHabilitadaCredito && cliente.pagosanticipados
-                  ? cliente.pagosanticipados
-                  : [],
+              ...(() => {
+                const pagoResuelto = resolvePagoAnticipadoCliente({
+                  pagoanticipado: cliente.pagoanticipado,
+                  pagosanticipados: parametrizacion.facturasAnticipadasAnticipo
+                    ? dataProforma.pagoanticipado
+                    : cliente.pagosanticipados,
+                  facturasAnticipadasAnticipo:
+                    parametrizacion.facturasAnticipadasAnticipo,
+                  permitirOrdenVenta: cliente.permitir_orden_venta,
+                  placaHabilitadaCredito: placaHabilitadaCredito,
+                });
+                return {
+                  pagoanticipado: pagoResuelto.defaultPagoanticipado,
+                  arrPagosanticipados:
+                    placaHabilitadaCredito && cliente.pagosanticipados
+                      ? cliente.pagosanticipados
+                      : [],
+                  valorAnticipo: pagoResuelto.valorAnticipo,
+                };
+              })(),
               resp_permitir_orden_venta: cliente.permitir_orden_venta,
               resp_pagoanticipado: cliente.pagoanticipado ?? false,
               resp_cupocredito: cliente.cupocredito ?? 0,
@@ -1439,11 +1493,6 @@ export default function HomeScreen() {
               cupoCreditoCliente: parseFloat(
                 (cliente.cupocredito ?? 0) - (dataProforma.saldoFacturas ?? 0),
               ),
-              valorAnticipo:
-                cliente.pagoanticipado &&
-                  parametrizacion.facturasAnticipadasAnticipo
-                  ? dataProforma.pagoanticipado
-                  : 0,
             });
 
             if (detallePagoAcumulativo && detallePagoAcumulativo.length > 0) {
@@ -1572,7 +1621,16 @@ export default function HomeScreen() {
               let defaultCupocredito = itemSupplier.cupocredito ?? 0;
               let defaultPermitir_orden_venta =
                 itemSupplier.permitir_orden_venta;
-              let defaultPagoanticipado = itemSupplier.pagoanticipado ?? false;
+              const pagoResuelto = resolvePagoAnticipadoCliente({
+                pagoanticipado: itemSupplier.pagoanticipado,
+                pagosanticipados: resp.data.pagosanticipados,
+                facturasAnticipadasAnticipo:
+                  parametrizacion.facturasAnticipadasAnticipo,
+                permitirOrdenVenta: itemSupplier.permitir_orden_venta,
+                placaHabilitadaCredito: true,
+              });
+              let defaultPagoanticipado = pagoResuelto.defaultPagoanticipado;
+              let defaultValorAnticipo = pagoResuelto.valorAnticipo;
               let defaultArrPagosanticipados = resp.data.pagosanticipados ?? [];
               let defaultFacturaanticipo_id =
                 arrAnticipos.length >= 1
@@ -1584,6 +1642,7 @@ export default function HomeScreen() {
                 defaultCupocredito = 0;
                 defaultPermitir_orden_venta = false;
                 defaultPagoanticipado = false;
+                defaultValorAnticipo = 0;
                 defaultArrPagosanticipados = [];
                 defaultFacturaanticipo_id = 0;
               }
@@ -1618,11 +1677,7 @@ export default function HomeScreen() {
                 cupoCreditoCliente: parseFloat(
                   defaultCupocredito - (itemSupplier.saldoFacturas ?? 0),
                 ),
-                valorAnticipo:
-                  itemSupplier.pagoanticipado &&
-                    parametrizacion.facturasAnticipadasAnticipo
-                    ? data.pagosanticipados
-                    : 0,
+                valorAnticipo: defaultValorAnticipo,
               });
               ToastAndroid.show("Cliente Encontrado", ToastAndroid.SHORT);
               if (selectedSurtidor?.proforma) {
@@ -2102,12 +2157,20 @@ export default function HomeScreen() {
                         data.item.permitir_orden_venta && placaHabilitadaCredito
                           ? data.item.permitir_orden_venta
                           : false,
-                      pagoanticipado:
-                        !data.item.permitir_orden_venta &&
-                          data.item.pagoanticipado &&
-                          placaHabilitadaCredito
-                          ? data.item.pagoanticipado
-                          : false,
+                      ...(() => {
+                        const pagoResuelto = resolvePagoAnticipadoCliente({
+                          pagoanticipado: data.item.pagoanticipado,
+                          pagosanticipados: data.item.pagosanticipados,
+                          facturasAnticipadasAnticipo:
+                            parametrizacion.facturasAnticipadasAnticipo,
+                          permitirOrdenVenta: data.item.permitir_orden_venta,
+                          placaHabilitadaCredito: placaHabilitadaCredito,
+                        });
+                        return {
+                          pagoanticipado: pagoResuelto.defaultPagoanticipado,
+                          valorAnticipo: pagoResuelto.valorAnticipo,
+                        };
+                      })(),
                       arrPagosanticipados: data.item.pagosanticipados ?? [],
                       facturaanticipo_id:
                         arrAnticipos.length >= 1
@@ -2123,13 +2186,8 @@ export default function HomeScreen() {
                       saldoFacturas: data.item.saldoFacturas ?? 0,
                       cupoCreditoCliente: parseFloat(
                         (data.item.cupocredito ?? 0) -
-                          (data.item.saldoFacturas ?? 0),
+                        (data.item.saldoFacturas ?? 0),
                       ),
-                      valorAnticipo:
-                        data.item.pagoanticipado &&
-                          parametrizacion.facturasAnticipadasAnticipo
-                          ? data.item.pagosanticipados
-                          : 0,
                     }));
                   }
                 } else if (statusData === 203) {
@@ -2263,7 +2321,16 @@ export default function HomeScreen() {
               let defaultCupocredito = itemSupplier.cupocredito ?? 0;
               let defaultPermitir_orden_venta =
                 itemSupplier.permitir_orden_venta;
-              let defaultPagoanticipado = itemSupplier.pagoanticipado ?? false;
+              const pagoResueltoCodigo = resolvePagoAnticipadoCliente({
+                pagoanticipado: itemSupplier.pagoanticipado,
+                pagosanticipados: resp.data.pagosanticipados,
+                facturasAnticipadasAnticipo:
+                  parametrizacion.facturasAnticipadasAnticipo,
+                permitirOrdenVenta: itemSupplier.permitir_orden_venta,
+                placaHabilitadaCredito: true,
+              });
+              let defaultPagoanticipado = pagoResueltoCodigo.defaultPagoanticipado;
+              let defaultValorAnticipo = pagoResueltoCodigo.valorAnticipo;
               let defaultArrPagosanticipados = resp.data.pagosanticipados ?? [];
               let defaultFacturaanticipo_id =
                 arrAnticipos.length >= 1
@@ -2275,6 +2342,7 @@ export default function HomeScreen() {
                 defaultCupocredito = 0;
                 defaultPermitir_orden_venta = false;
                 defaultPagoanticipado = false;
+                defaultValorAnticipo = 0;
                 defaultArrPagosanticipados = [];
                 defaultFacturaanticipo_id = 0;
               }
@@ -2310,11 +2378,7 @@ export default function HomeScreen() {
                 cupoCreditoCliente: parseFloat(
                   defaultCupocredito - (itemSupplier.saldoFacturas ?? 0),
                 ),
-                valorAnticipo:
-                  itemSupplier.pagoanticipado &&
-                    parametrizacion.facturasAnticipadasAnticipo
-                    ? itemSupplier.pagosanticipados
-                    : 0,
+                valorAnticipo: defaultValorAnticipo,
               }));
               ToastAndroid.show("Cliente Encontrado", ToastAndroid.SHORT);
               if (selectedSurtidor?.proforma) {
@@ -2419,7 +2483,15 @@ export default function HomeScreen() {
     let defaultTipoventa = (data.cupocredito ?? 0) > 0 ? "CR" : "CO";
     let defaultCupocredito = data.cupocredito ?? 0;
     let defaultPermitir_orden_venta = data.permitir_orden_venta;
-    let defaultPagoanticipado = data.pagoanticipado ?? false;
+    const pagoResueltoCliente = resolvePagoAnticipadoCliente({
+      pagoanticipado: data.pagoanticipado,
+      pagosanticipados: data.pagosanticipados,
+      facturasAnticipadasAnticipo: parametrizacion.facturasAnticipadasAnticipo,
+      permitirOrdenVenta: data.permitir_orden_venta,
+      placaHabilitadaCredito: true,
+    });
+    let defaultPagoanticipado = pagoResueltoCliente.defaultPagoanticipado;
+    let defaultValorAnticipo = pagoResueltoCliente.valorAnticipo;
     let defaultArrPagosanticipados = data.pagosanticipados ?? [];
     let defaultFacturaanticipo_id =
       arrAnticipos.length >= 1
@@ -2431,6 +2503,7 @@ export default function HomeScreen() {
       defaultCupocredito = 0;
       defaultPermitir_orden_venta = false;
       defaultPagoanticipado = false;
+      defaultValorAnticipo = 0;
       defaultArrPagosanticipados = [];
       defaultFacturaanticipo_id = 0;
     }
@@ -2469,10 +2542,7 @@ export default function HomeScreen() {
       cupoCreditoCliente: parseFloat(
         defaultCupocredito - (data.saldoFacturas ?? 0),
       ),
-      valorAnticipo:
-        defaultPagoanticipado && parametrizacion.facturasAnticipadasAnticipo
-          ? (data.pagosanticipados ?? 0)
-          : 0,
+      valorAnticipo: defaultValorAnticipo,
     });
     if (selectedSurtidor?.proforma) {
       searchPlaca(false, data.id);
@@ -3704,6 +3774,14 @@ export default function HomeScreen() {
         : cliente.pagosanticipados
       : [];
 
+    const pagoResueltoPlaca = resolvePagoAnticipadoCliente({
+      pagoanticipado: cliente.pagoanticipado,
+      pagosanticipados: pagos,
+      facturasAnticipadasAnticipo: parametrizacion.facturasAnticipadasAnticipo,
+      permitirOrdenVenta: cliente.permitir_orden_venta,
+      placaHabilitadaCredito: true,
+    });
+
     setObjHeadBilling({
       ...objHeadBilling,
       cliente_id: cliente.id,
@@ -3712,18 +3790,14 @@ export default function HomeScreen() {
       n_identificacion: cliente.numeroidentificacion,
       direccion: cliente.direccion ?? "",
       correo: cliente.correo ?? "",
-      arrPagosanticipados: (cliente.pagoanticipado ?? false) ? pagos : [],
-      pagoanticipado: cliente.pagoanticipado ?? false,
+      arrPagosanticipados: pagos,
+      pagoanticipado: pagoResueltoPlaca.defaultPagoanticipado,
       resp_pagoanticipado: cliente.pagoanticipado ?? false,
       resp_cupocredito: cliente.cupocredito ?? 0,
       resp_arrPagosanticipados: pagos,
       cupocredito: cliente.cupocredito ?? 0,
       tipoventa: (cliente.cupocredito ?? 0) > 0 ? "CR" : "CO",
-      valorAnticipo:
-        (cliente.pagoanticipado ?? false) &&
-        parametrizacion.facturasAnticipadasAnticipo
-          ? (cliente.pagosanticipados ?? 0)
-          : 0,
+      valorAnticipo: pagoResueltoPlaca.valorAnticipo,
     });
 
     let arrAnticipos = [];
@@ -3947,9 +4021,10 @@ export default function HomeScreen() {
         printerDeposito={printerDeposito}
         printDocument={printDocument}
         dataResumen={dataResumen}
+        loading={resumenLoading}
         closeModal={() => {
           setSearchResumenModal(false);
-          setDataResumen([]);
+          setDataResumen(null);
         }}
       />
     );

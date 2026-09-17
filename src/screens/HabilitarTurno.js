@@ -1,11 +1,21 @@
-import { View, Text, StyleSheet, ScrollView, ToastAndroid } from "react-native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  ToastAndroid,
+  Pressable,
+} from "react-native";
 import { useCallback, useEffect, useState } from "react";
 import { Button, TextInput } from "react-native-paper";
+import Ionicons from "react-native-vector-icons/Ionicons";
+import { getLadoLabel } from "../utils/gasolineraLados";
+import { Colors } from "../utils/Colors";
+import { sharedStyles } from "../styles/SharedStyles";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { getToken, mergeStorage } from "../utils/Utils";
 import Loader from "../components/Loader";
 import instance from "../utils/Instance";
-import { useDeviceOrientation } from "@react-native-community/hooks";
 import CustomAppBar from "../components/CustomAppBar";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { showAlert } from "../components/CustomAlert";
@@ -19,7 +29,6 @@ export default function HabilitarTurno({ imprimir, status = "I", closeModal }) {
   const [surtidores, setSurtidores] = useState([]);
   const [listArrSurtidores, setListArrSurtidores] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
-  const orientation = useDeviceOrientation();
   const [codigoMovil, setCodigoMovil] = useState("");
   const [config, setConfig] = useState(null);
   const [conexionTransactor, setConexionTransactor] = useState({
@@ -481,73 +490,60 @@ export default function HabilitarTurno({ imprimir, status = "I", closeModal }) {
     }
   };
 
-  const renderEstacion = (item, surtidores) => (
-    <View style={styles.estacionContainer}>
-      <Text style={{ fontWeight: "bold", textAlign: "center" }}>
-        {item.nombre}
-      </Text>
-      <View style={styles.surtidoresContainer}>
-        <View style={styles.surtidorColumn}>
-          <Button
-            style={{
-              padding: 0,
-              borderRadius: 10,
-              marginHorizontal: 10,
-              marginVertical: 5,
-            }}
-            icon="reload"
-            mode="contained-tonal"
-            onPress={() => getGalonajeLado(item, "R")}
+  const renderSurtidorInput = (sur) => {
+    const fuelColor = sur?.tipo_combustible?.valor ?? "#cbd5e1";
+    return (
+      <View key={sur.id} style={styles.readingBlock}>
+        <Text style={styles.readingLabel}>{sur.nombre}</Text>
+        <TextInput
+          mode="outlined"
+          keyboardType="numeric"
+          onChangeText={(text) => changeValorManual(text, sur)}
+          disabled={sur.disabled ?? true}
+          placeholder="000.0000"
+          value={sur.galonaje ?? ""}
+          style={styles.readingInput}
+          contentStyle={styles.readingInputContent}
+          outlineStyle={{ borderLeftWidth: 4, borderLeftColor: fuelColor }}
+          dense
+        />
+      </View>
+    );
+  };
+
+  const renderLado = (item, posicion) => {
+    const ladoItems = surtidores.filter(
+      (z) => z.estacion_id === item.id && z.posicion === posicion,
+    );
+    const ladoRef = ladoItems[0] ?? { posicion };
+    return (
+      <View style={styles.sideColumn} key={`${item.id}-${posicion}`}>
+        <View style={styles.sideHeader}>
+          <Text style={styles.sideLabel}>{getLadoLabel(ladoRef)}</Text>
+          <Pressable
+            style={({ pressed }) => [
+              styles.refreshBtn,
+              pressed && sharedStyles.pressed,
+            ]}
+            onPress={() => getGalonajeLado(item, posicion)}
           >
-            {"Cargar Lecturas"}
-          </Button>
-          {surtidores
-            .filter((z) => z.estacion_id === item.id && z.posicion === "R")
-            .map((sur, idx) => (
-              <View key={idx}>
-                <Text>{sur.nombre}</Text>
-                <TextInput
-                  mode={"outlined"}
-                  keyboardType={"numeric"}
-                  onChangeText={(text) => changeValorManual(text, sur)}
-                  disabled={sur.disabled ?? true}
-                  name={`galonaje+${sur.id}`}
-                  placeholder={"000.0000"}
-                  value={sur.galonaje ?? ""}
-                />
-              </View>
-            ))}
+            <Ionicons name="refresh" size={18} color="#c2410c" />
+          </Pressable>
         </View>
-        <View style={styles.surtidorColumn}>
-          <Button
-            style={{
-              padding: 0,
-              borderRadius: 10,
-              marginHorizontal: 10,
-              marginVertical: 5,
-            }}
-            icon="reload"
-            mode="contained-tonal"
-            onPress={() => getGalonajeLado(item, "L")}
-          >
-            {"Cargar Lecturas"}
-          </Button>
-          {surtidores
-            .filter((z) => z.estacion_id === item.id && z.posicion === "L")
-            .map((sur, idx) => (
-              <View key={idx}>
-                <Text>{sur.nombre}</Text>
-                <TextInput
-                  onChangeText={(text) => changeValorManual(text, sur)}
-                  keyboardType={"numeric"}
-                  mode={"outlined"}
-                  disabled={sur.disabled ?? true}
-                  name={`galonaje+${sur.id}`}
-                  placeholder={"000.0000"}
-                  value={sur.galonaje ?? ""}
-                />
-              </View>
-            ))}
+        {ladoItems.map(renderSurtidorInput)}
+      </View>
+    );
+  };
+
+  const renderEstacion = (item) => (
+    <View style={styles.stationCard} key={item.id}>
+      <View style={styles.stationHeader}>
+        <Text style={styles.stationTitle}>{item.nombre}</Text>
+      </View>
+      <View style={styles.stationBody}>
+        <View style={styles.sidesRow}>
+          {renderLado(item, "R")}
+          {renderLado(item, "L")}
         </View>
       </View>
     </View>
@@ -563,65 +559,51 @@ export default function HabilitarTurno({ imprimir, status = "I", closeModal }) {
         title={status === "I" ? "Habilitacion de Turno" : "Cerrar el turno"}
         bold={true}
       />
-      <ScrollView style={{ flex: 1 }}>
-        {estaciones.length > 0 && (
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={styles.scrollContent}
+      >
+        {estaciones.length > 0 ? (
           <>
-            <>
-              {estaciones.map((item, index) => {
-                const stationsPerRow = orientation === "portrait" ? 1 : 3;
-                if (index % stationsPerRow !== 0) {
-                  return null;
-                }
-                const rowItems = estaciones.slice(
-                  index,
-                  index + stationsPerRow,
-                );
-                return (
-                  <View key={index} style={styles.row}>
-                    {rowItems.map((rowItem, rowIndex) => (
-                      <View key={rowIndex} style={styles.estacionContainer}>
-                        {renderEstacion(rowItem, surtidores)}
-                      </View>
-                    ))}
-                  </View>
-                );
-              })}
-            </>
-            <View style={{ marginHorizontal: 15, marginBottom: 20 }}>
-              <Button mode="contained" onPress={() => saveGalonajeSurtidores()}>
+            <Text style={styles.screenHint}>
+              {status === "I"
+                ? "Revise las lecturas iniciales antes de activar el turno."
+                : "Confirme las lecturas finales antes de cerrar el turno."}
+            </Text>
+            {estaciones.map((item) => renderEstacion(item))}
+            <View style={styles.footer}>
+              <Button
+                mode="contained"
+                buttonColor={Colors.primary}
+                textColor="#fff"
+                style={styles.primaryBtn}
+                onPress={() => saveGalonajeSurtidores()}
+              >
                 {status === "I" ? "Activar Turno" : "Cerrar Turno"}
               </Button>
             </View>
           </>
-        )}
-        {estaciones.length === 0 && (
-          <View style={{ marginHorizontal: 15 }}>
-            <View
-              style={{
-                borderRadius: 10,
-                backgroundColor: "#f0f0f0",
-                marginTop: 30,
-                paddingVertical: 20,
-              }}
-            >
-              <Text
-                style={{ textAlign: "center", fontWeight: "500", fontSize: 16 }}
-              >
-                LAS ESTACIONES CONFIGURADAS NO COINCIDEN CON EL TURNO ASIGNADO,
-                VERIFIQUE LA ASIGNACION DEL TURNO
+        ) : (
+          <View style={styles.emptyWrap}>
+            <View style={styles.emptyCard}>
+              <Ionicons name="alert-circle-outline" size={40} color="#b91c1c" />
+              <Text style={styles.emptyText}>
+                Las estaciones configuradas no coinciden con el turno asignado.
+                Verifique la asignación del turno.
               </Text>
             </View>
-            <View style={{ marginTop: 30 }}>
-              <Button
-                mode="contained"
-                onPress={() => {
-                  closeModal();
-                  navigation.navigate("Configuration");
-                }}
-              >
-                Configurar Estaciones
-              </Button>
-            </View>
+            <Button
+              mode="contained"
+              buttonColor={Colors.primary}
+              textColor="#fff"
+              style={styles.primaryBtn}
+              onPress={() => {
+                closeModal();
+                navigation.navigate("Configuration");
+              }}
+            >
+              Configurar Estaciones
+            </Button>
           </View>
         )}
       </ScrollView>
@@ -630,19 +612,118 @@ export default function HabilitarTurno({ imprimir, status = "I", closeModal }) {
 }
 
 const styles = StyleSheet.create({
-  row: {
+  scroll: {
+    flex: 1,
+    backgroundColor: "#eef1f4",
+  },
+  scrollContent: {
+    padding: 10,
+    paddingBottom: 24,
+  },
+  screenHint: {
+    fontSize: 13,
+    color: "#64748b",
+    marginBottom: 10,
+    marginHorizontal: 4,
+  },
+  stationCard: {
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#e2e8f0",
+    marginBottom: 10,
+    overflow: "hidden",
+  },
+  stationHeader: {
+    backgroundColor: Colors.appBarBackground,
+    borderBottomWidth: 2,
+    borderBottomColor: Colors.primary,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+  },
+  stationTitle: {
+    textAlign: "center",
+    color: "#fff",
+    fontWeight: "700",
+    fontSize: 15,
+  },
+  stationBody: {
+    backgroundColor: "#f8fafc",
+    padding: 10,
+  },
+  sidesRow: {
     flexDirection: "row",
+  },
+  sideColumn: {
+    flex: 1,
+    paddingHorizontal: 4,
+  },
+  sideHeader: {
+    flexDirection: "row",
+    alignItems: "center",
     justifyContent: "space-between",
+    marginBottom: 8,
+    paddingHorizontal: 2,
   },
-  estacionContainer: {
-    flex: 1,
-    margin: 10,
+  sideLabel: {
+    fontSize: 12,
+    fontWeight: "800",
+    color: "#1e293b",
+    letterSpacing: 0.4,
   },
-  surtidoresContainer: {
-    flexDirection: "row",
+  refreshBtn: {
+    width: 34,
+    height: 34,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#fdba74",
+    backgroundColor: "#fff7ed",
+    alignItems: "center",
+    justifyContent: "center",
   },
-  surtidorColumn: {
-    flex: 1,
-    margin: 5,
+  readingBlock: {
+    marginBottom: 8,
+  },
+  readingLabel: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#334155",
+    textAlign: "center",
+    marginBottom: 4,
+  },
+  readingInput: {
+    backgroundColor: "#fff",
+  },
+  readingInputContent: {
+    textAlign: "right",
+    fontWeight: "700",
+  },
+  footer: {
+    marginTop: 4,
+    alignItems: "flex-end",
+  },
+  primaryBtn: {
+    minWidth: 180,
+    borderRadius: 10,
+  },
+  emptyWrap: {
+    marginTop: 20,
+    gap: 16,
+  },
+  emptyCard: {
+    backgroundColor: "#fef2f2",
+    borderWidth: 1,
+    borderColor: "#fecaca",
+    borderRadius: 12,
+    padding: 20,
+    alignItems: "center",
+    gap: 10,
+  },
+  emptyText: {
+    textAlign: "center",
+    color: "#991b1b",
+    fontSize: 14,
+    fontWeight: "600",
+    lineHeight: 20,
   },
 });

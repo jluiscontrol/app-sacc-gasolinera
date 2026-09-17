@@ -18,7 +18,7 @@
       "bundleIdentifier": "com.controlsistemasjl.gasolineraapp"
     },
     "android": {
-      "versionCode": 4,
+      "versionCode": 5,
       "adaptiveIcon": {
         "foregroundImage": "./assets/icon.png",
         "backgroundColor": "#ffffff"

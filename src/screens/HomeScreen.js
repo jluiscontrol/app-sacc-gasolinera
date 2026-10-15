@@ -1868,7 +1868,14 @@ export default function HomeScreen() {
             objHeadBilling.pagoanticipado &&
             parametrizacion.facturasAnticipadasAnticipo
           ) {
-            if (parseFloat(valorDispensar.dolares) > 0) {
+            if (
+              (valorDispensar.galones === "" ||
+                parseFloat(valorDispensar.galones) === 0) &&
+              (valorDispensar.dolares === "" ||
+                parseFloat(valorDispensar.dolares) === 0)
+            ) {
+              valorAnticipo = parseFloat(objHeadBilling.valorAnticipo);
+            } else if (parseFloat(valorDispensar.dolares) > 0) {
               if (
                 parseFloat(valorDispensar.dolares) >
                 parseFloat(objHeadBilling.valorAnticipo)
@@ -2033,7 +2040,7 @@ export default function HomeScreen() {
               const respuesta = await showModal({
                 title: "Información",
                 content:
-                  "El cliente tiene pagos anticipados, ¿Desea realizar una factura normal o escoger un pago?",
+                  "El cliente tiene pagos anticipados, ¿Desea realizar una factura normal sin escoger un pago?",
               });
               if (!respuesta) {
                 liberarHabilitar(status);

@@ -1,20 +1,12 @@
-import {
-  Ionicons,
-  MaterialIcons,
-  AntDesign,
-  FontAwesome5,
-  Feather,
-  Entypo,
-  MaterialCommunityIcons,
-} from "@expo/vector-icons";
+import Ionicons from "@react-native-vector-icons/ionicons";
+import MaterialIcons from "@react-native-vector-icons/material-icons";
+import FontAwesome5 from "@react-native-vector-icons/fontawesome5";
+import MaterialCommunityIcons from "@react-native-vector-icons/material-design-icons";
 
 const iconFamilies = {
   ion: Ionicons,
   material: MaterialIcons,
-  ant: AntDesign,
   fa5: FontAwesome5,
-  feather: Feather,
-  entypo: Entypo,
   materialC: MaterialCommunityIcons,
 };
 
@@ -23,6 +15,8 @@ export default function GlobalIcon({
   name,
   size = 24,
   color = "black",
+  solid,
+  iconStyle,
   ...props
 }) {
   const IconComponent = iconFamilies[family];
@@ -30,5 +24,17 @@ export default function GlobalIcon({
     console.warn(`Icon family "${family}" not found`);
     return null;
   }
-  return <IconComponent name={name} size={size} color={color} {...props} />;
+
+  const resolvedIconStyle =
+    family === "fa5" ? (iconStyle ?? (solid ? "solid" : undefined)) : iconStyle;
+
+  return (
+    <IconComponent
+      name={name}
+      size={size}
+      color={color}
+      {...(resolvedIconStyle ? { iconStyle: resolvedIconStyle } : {})}
+      {...props}
+    />
+  );
 }

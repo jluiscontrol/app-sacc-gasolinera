@@ -21,10 +21,11 @@ const DrawerComponent = (props) => {
   useEffect(() => {
     async function handleLogout() {
       const data = await getToken("configuration");
+      if (!data) return;
       setUsuario(data.userData);
-      setObjLicensed(localstorage.licensed);
-      if (localstorage && "periodofiscal_id" in localstorage) {
-        setPeriodofiscal_id(localstorage.periodofiscal_id);
+      setObjLicensed(data.licensed);
+      if ("periodofiscal_id" in data) {
+        setPeriodofiscal_id(data.periodofiscal_id);
       }
     }
 

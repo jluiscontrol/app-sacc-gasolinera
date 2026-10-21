@@ -37,7 +37,7 @@ import { getSocket } from "../utils/socket";
 import { useModalStore } from "../stores/ModalStore";
 import ListClientesByPlacaComponent from "../components/ListClientesByPlacaComponent";
 import { useDrawerStatus } from "@react-navigation/drawer";
-import Ionicons from "react-native-vector-icons/Ionicons";
+import Ionicons from "@react-native-vector-icons/ionicons";
 import { sharedStyles } from "../styles/SharedStyles";
 import { showAlert } from "../components/CustomAlert";
 import { Colors } from "../utils/Colors";

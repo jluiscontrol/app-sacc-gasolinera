@@ -8,7 +8,7 @@ import {
 } from "react-native";
 import { useCallback, useEffect, useState } from "react";
 import { Button, TextInput } from "react-native-paper";
-import Ionicons from "react-native-vector-icons/Ionicons";
+import Ionicons from "@react-native-vector-icons/ionicons";
 import { getLadoLabel } from "../utils/gasolineraLados";
 import { Colors } from "../utils/Colors";
 import { sharedStyles } from "../styles/SharedStyles";

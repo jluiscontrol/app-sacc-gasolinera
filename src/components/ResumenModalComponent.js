@@ -9,7 +9,7 @@ import {
   View,
 } from "react-native";
 import { TextInput } from "react-native-paper";
-import Ionicons from "react-native-vector-icons/Ionicons";
+import Ionicons from "@react-native-vector-icons/ionicons";
 import { SkypeIndicator } from "react-native-indicators";
 import { sharedStyles } from "../styles/SharedStyles";
 import { Colors } from "../utils/Colors";

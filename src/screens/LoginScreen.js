@@ -8,7 +8,6 @@ import {
   StyleSheet,
   KeyboardAvoidingView,
 } from "react-native";
-import Ionicons from "react-native-vector-icons/Ionicons";
 import WhatsappSVG from "../../assets/images/misc/whatsapp.svg";
 import FacebookSVG from "../../assets/images/misc/facebook.svg";
 import InstagramSVG from "../../assets/images/misc/instagram.svg";
@@ -45,7 +44,7 @@ export default function LoginScreen() {
   useFocusEffect(
     useCallback(() => {
       getLicensed();
-      return () => {};
+      return () => { };
     }, []),
   );
 
@@ -168,7 +167,7 @@ export default function LoginScreen() {
               },
             },
           );
-        } catch (error) {}
+        } catch (error) { }
         await login();
       } else {
         showAlert({

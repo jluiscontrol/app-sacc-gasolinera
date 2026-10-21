@@ -1,7 +1,6 @@
 import {
   View,
   Text,
-  Alert,
   StyleSheet,
   FlatList,
   Pressable,
@@ -18,6 +17,7 @@ import { SegmentedButtons, TextInput } from "react-native-paper";
 import CustomAppBar from "./CustomAppBar";
 import { sharedStyles } from "../styles/SharedStyles";
 import GlobalIcon from "./GlobalIcon";
+import { showAlert } from "./CustomAlert";
 import { Colors } from "../utils/Colors";
 
 export default function SearchCustomer(props) {
@@ -73,16 +73,16 @@ export default function SearchCustomer(props) {
       if (response.data.status === 200) {
         setClientes(response.data.items);
       } else {
-        Alert.alert(
-          "Información",
-          "Hubo un problema al consultar los clientes",
-        );
+        showAlert({
+          title: "Información",
+          message: "Hubo un problema al consultar los clientes",
+        });
       }
     } catch (error) {
-      Alert.alert(
-        "Alerta",
-        "Hubo un problema al consultar los clientes en el servidor",
-      );
+      showAlert({
+        title: "Alerta",
+        message: "Hubo un problema al consultar los clientes en el servidor",
+      });
     } finally {
       setIsLoading(false);
     }

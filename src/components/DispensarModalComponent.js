@@ -17,7 +17,7 @@ import SearchCustomer from "./SearchCustomer";
 import CustomPicker from "./CustomPicker";
 import { Button, Chip, TextInput } from "react-native-paper";
 import CustomCheckBox from "./CustomCheckBox";
-import Ionicons from "react-native-vector-icons/Ionicons";
+import Ionicons from "@react-native-vector-icons/ionicons";
 import { sharedStyles } from "../styles/SharedStyles";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { showAlert } from "./CustomAlert";

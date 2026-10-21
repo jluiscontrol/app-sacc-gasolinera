@@ -6,7 +6,7 @@ import {
   Platform,
   StatusBar,
 } from "react-native";
-import Ionicons from "react-native-vector-icons/Ionicons";
+import Ionicons from "@react-native-vector-icons/ionicons";
 import { sharedStyles } from "../styles/SharedStyles";
 import { SafeAreaView } from "react-native-safe-area-context";
 import useThemeStore from "../stores/ThemeStore";

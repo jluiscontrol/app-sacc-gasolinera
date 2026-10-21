@@ -1,6 +1,6 @@
 import { View, Text, Pressable, StyleSheet, Platform } from "react-native";
 import React from "react";
-import Ionicons from "react-native-vector-icons/Ionicons";
+import Ionicons from "@react-native-vector-icons/ionicons";
 import DispensadorSVG from "../../assets/images/misc/dispensador.svg";
 import DispensandoSVG from "../../assets/images/misc/dispensando.svg";
 import PagandoSVG from "../../assets/images/misc/pagando.svg";

@@ -49,7 +49,6 @@ function App() {
 
   return (
     <PaperProvider theme={currentTheme}>
-      <CustomAlert />
       <SafeAreaProvider>
         <StatusBar
           barStyle={isDarkTheme ? "light-content" : "dark-content"}
@@ -59,6 +58,7 @@ function App() {
         <NavigationContainer theme={currentTheme}>
           <Navigator />
         </NavigationContainer>
+        <CustomAlert />
       </SafeAreaProvider>
     </PaperProvider>
   );

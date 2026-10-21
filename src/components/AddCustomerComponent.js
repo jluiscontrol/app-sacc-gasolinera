@@ -5,7 +5,6 @@ import {
   Keyboard,
   TouchableWithoutFeedback,
   ScrollView,
-  Alert,
   ToastAndroid,
   StyleSheet,
 } from "react-native";
@@ -18,6 +17,7 @@ import CustomFAB from "./CustomFAB";
 import CustomCheckBox from "./CustomCheckBox";
 import { getToken, validateIdentificacion } from "../utils/Utils";
 import instance from "../utils/Instance";
+import { showAlert } from "./CustomAlert";
 
 export default function AddCustomerComponent({
   closeModal,
@@ -184,48 +184,61 @@ export default function AddCustomerComponent({
           .catch((err) => {
             if (err.response.data.error) {
               const errorHandle = err.response.data.error;
-              Alert.alert(
-                "Error al registrar el Cliente!",
-                `${errorHandle.message}`,
-              );
+              showAlert({
+                title: "Error al registrar el Cliente!",
+                message: `${errorHandle.message}`,
+              });
             }
             setIsLoading(false);
           });
       } else {
-        Alert.alert(
-          "Informacion",
-          "Numero de identificacion invalido, formato invalido, verifique!",
-        );
+        showAlert({
+          title: "Informacion",
+          message:
+            "Numero de identificacion invalido, formato invalido, verifique!",
+        });
       }
     } else {
       if (!ct_tipoidentificacion_id) {
-        Alert.alert(
-          "Información",
-          "Falta el tipo de identificación, por favor verifique.",
-        );
+        showAlert({
+          title: "Información",
+          message: "Falta el tipo de identificación, por favor verifique.",
+        });
       } else if (!numeroidentificacion) {
-        Alert.alert(
-          "Información",
-          "Falta el número de identificación, por favor verifique.",
-        );
+        showAlert({
+          title: "Información",
+          message: "Falta el número de identificación, por favor verifique.",
+        });
       } else if (nombrecompleto.trim() === "") {
-        Alert.alert(
-          "Información",
-          "Falta el nombre completo, por favor verifique.",
-        );
+        showAlert({
+          title: "Información",
+          message: "Falta el nombre completo, por favor verifique.",
+        });
       } else if (!ciudad_id) {
-        Alert.alert("Información", "Falta la ciudad, por favor verifique.");
+        showAlert({
+          title: "Información",
+          message: "Falta la ciudad, por favor verifique.",
+        });
       } else if (!ct_estadocivil) {
-        Alert.alert(
-          "Información",
-          "Falta el estado civil, por favor verifique.",
-        );
+        showAlert({
+          title: "Información",
+          message: "Falta el estado civil, por favor verifique.",
+        });
       } else if (!ct_sexo) {
-        Alert.alert("Información", "Falta el sexo, por favor verifique.");
+        showAlert({
+          title: "Información",
+          message: "Falta el sexo, por favor verifique.",
+        });
       } else if (direccion.length === 0) {
-        Alert.alert("Información", "Falta la dirección, por favor verifique.");
+        showAlert({
+          title: "Información",
+          message: "Falta la dirección, por favor verifique.",
+        });
       } else {
-        Alert.alert("Información", "Datos vacíos, por favor verifique.");
+        showAlert({
+          title: "Información",
+          message: "Datos vacíos, por favor verifique.",
+        });
       }
     }
   };

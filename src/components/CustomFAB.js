@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { StyleSheet, View, Text, Pressable } from "react-native";
-import Ionicons from "react-native-vector-icons/Ionicons";
+import Ionicons from "@react-native-vector-icons/ionicons";
 import { sharedStyles } from "../styles/SharedStyles";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Colors } from "../utils/Colors";

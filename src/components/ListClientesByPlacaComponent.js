@@ -2,7 +2,7 @@ import { View, Text, FlatList, StyleSheet, Pressable } from "react-native";
 import { useEffect, useState } from "react";
 import instance from "../utils/Instance";
 import CustomAppBar from "./CustomAppBar";
-import Ionicons from "react-native-vector-icons/Ionicons";
+import Ionicons from "@react-native-vector-icons/ionicons";
 import {
   SafeAreaView,
   useSafeAreaInsets,
